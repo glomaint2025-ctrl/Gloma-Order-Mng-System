@@ -45,6 +45,15 @@ jobs:
         run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G
       - name: Tests on SQLite
         run: vendor/bin/pest
+      - name: Wait for MySQL over TCP
+        # The image restarts once during first boot; the in-container health check can pass on the
+        # temporary (no-network) server. A TCP query only succeeds once the real server is up.
+        run: |
+          for i in $(seq 1 60); do
+            mysql -h 127.0.0.1 -P 3306 -uroot -proot -e 'select 1' portal_test >/dev/null 2>&1 && exit 0
+            sleep 2
+          done
+          echo "MySQL did not become ready" && exit 1
       - name: Tests on MySQL 8 (row locks, real SQL)
         run: vendor/bin/pest
         env:
@@ -77,6 +86,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -104,11 +115,17 @@ jobs:
           extensions: mbstring, bcmath, intl, gd, zip
           coverage: none
 
+      - uses: pnpm/action-setup@v4
+        if: ${{ hashFiles('frontend/package.json') != '' }}
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v4
+        if: ${{ hashFiles('frontend/package.json') != '' }}
+        with:
+          node-version: '22'
       - name: Build frontend into backend/public/app (when it exists)
         if: ${{ hashFiles('frontend/package.json') != '' }}
-        run: |
-          corepack enable
-          cd frontend && pnpm install --frozen-lockfile && pnpm run build
+        run: cd frontend && pnpm install --frozen-lockfile && pnpm run build
 
       - name: Install production PHP dependencies
         working-directory: backend

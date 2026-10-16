@@ -19,5 +19,11 @@ One task = one branch = one PR (about 15 minutes to review). The riskiest work a
 | T12 | Admin: shops CRUD with owner, users, couriers, Gloma courier accounts, audit log viewer | Http/Admin | permission tests (owner gets 403) |
 | T13 | Ops: health endpoint, scheduler (queue via cron, retention), deploy workflows (main → prod, uat → uat), SPIKE-1 script | .github, routes/console | workflow YAML lint passes; health test passes |
 | T14 | Docs: API.md, 08, 09, FE handover prompt | docs | handover is complete enough for a fresh session |
+| T15 | Frontend (built with Antigravity) + review: real-API contract tests, 6 bug fixes | frontend | 25 FE tests, E2E main flow in browser |
+| T16 | Forgot / reset password (API + pages) | Http/Auth, frontend | reset link round-trip tested in browser |
+| T17 | CSV exports (orders, ledger, sales report) | Support/CsvExport | tenant-leak test passes with each guard alone |
+| T18 | Sales trend, product photos | Finance/Queries, Catalog | backend + FE tests |
+| T19 | PDPA export/erase, retention job reuses it | Customers/Services/CustomerPrivacy | erase keeps ledger; audit logged |
+| T20 | FE quality: lint 0, code-split routes | frontend | 0 warnings; main bundle 489 KB |
 
-**Status (2026-10-16):** T00–T14 all done in one autonomous run (D50) as local commits on `main` (a `uat` branch was created from it). There is no remote yet (D53); the branch and PR flow begins once the developer adds the private GitHub remote. Frontend tasks: docs/FRONTEND-HANDOVER.md.
+**Status (2026-10-16):** T00–T20 all done (D50, D55, D56) as local commits on `main`; `uat` points at the same commit. There is no remote yet (D53); the branch and PR flow begins once the developer adds the private GitHub remote. Frontend tasks: docs/FRONTEND-HANDOVER.md.

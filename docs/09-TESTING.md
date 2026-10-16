@@ -11,12 +11,16 @@
 | Money & reports | `tests/Feature/FinanceAndReportTest.php` | sales report and dashboard match orders and ledger to the cent (success measure 4), COD outstanding, manual ledger signs, no "expected/forecast" wording (CBSL) |
 | Customers & notifications | `tests/Feature/CustomerAndNotificationTest.php` | lookup and warnings, risky flag never blocks, per-shop history (admin sees cross-shop), Text.lk payload (`Http::fake`), provider failure doesn't break orders, e-bill email with PDF, Sinhala template cost, SMS usage |
 | Admin | `tests/Feature/AdminTest.php` | onboarding a shop with an owner, multi-shop owner, owners blocked from admin, status changes, users, couriers, templates, audit log, admin dashboard |
+| Go-live extras | `tests/Feature/GoLiveExtrasTest.php` | forgot/reset password (single-use token, no account probing), CSV exports (filters, BOM, formula-injection, **tenant isolation with each guard alone**), sales trend (daily/monthly, zero-filled), product photos (admin only, replace deletes old file), PDPA export/erase (keeps ledger, audit, retention job) |
+| Frontend | `frontend/src/test/*` (Vitest) | API layer against **real backend response shapes** (`apiContract`), error interceptor, money and SMS helpers, Colombo dates, order form warnings and live total, available_actions buttons, reset-password page, trend chart, downloads |
 | Contract | `tests/Feature/ContractTest.php` | JSON shapes the frontend relies on, money format, error shapes, PDFs, health |
 | Concurrency (SPIKE-1) | `scripts/spike-concurrency.sh` | 10+ parallel sellers race for the last unit on MySQL: exactly one wins (success measure 2) |
 
 Rules: tests never hit the real network (`Http::preventStrayRequests()`, the log SMS driver, `Mail::fake`). Every new tenant model gets an isolation test. Every bug fix gets a test.
 
-**Current result (2026-10-16):** 94 tests / 697 assertions green on SQLite **and** MySQL 8.0.46; Larastan level 6: 0 errors; Pint clean; SPIKE-1 passed 3 out of 3 runs (12 parallel sellers).
+**Current result (2026-10-16):** backend 106 tests / 803 assertions green on SQLite **and** MySQL 8.0.46; Larastan level 6: 0 errors; Pint clean; SPIKE-1 passed 3 out of 3 runs (12 parallel sellers). Frontend: typecheck 0 errors, lint 0 warnings, 32 Vitest tests, build OK. Main flows and all new features also clicked through in the browser against the running backend.
+
+Rule learned (D55): frontend tests must use the backend's real response shapes (see `apiContract.test.ts`), not hand-written mocks of the API functions.
 
 ## UAT checklist (run on UAT before every production release)
 Use two browsers: **A** = Gloma admin, **B** = shop owner.
@@ -45,6 +49,13 @@ Use two browsers: **A** = Gloma admin, **B** = shop owner.
 - [ ] Switch the shop to "by location" with a split. B can't sell stock that's only at Gloma. Switch back.
 - [ ] Suspend the shop: B gets "This shop is suspended". Close the shop: B is read-only.
 - [ ] Wrong password 6 times: "Too many login attempts".
+
+**Go-live extras**
+- [ ] "Forgot password?" → email arrives → link opens the reset page → new password works, old one doesn't.
+- [ ] Export CSV on orders (with a filter), money and sales report opens correctly in Excel, Sinhala names readable.
+- [ ] Dashboard sales trend matches the delivered sales figures.
+- [ ] Admin uploads a product photo; it shows in the list. Owner has no photo buttons.
+- [ ] Admin downloads a customer's data, then erases a test customer: order totals and money stay, name/phone are gone.
 
 **Reports**
 - [ ] The sales report for the test period matches a hand calculation (bought, sold by Gloma vs shop, gross profit).

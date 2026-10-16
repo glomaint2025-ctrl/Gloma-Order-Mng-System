@@ -1,5 +1,7 @@
 # Frontend handover prompt — Gloma Shop Portal
 
+> **Status (2026-10-16): done.** The frontend was built from this prompt and reviewed (see DECISIONS D55). Kept for reference and for rebuilding parts of it.
+
 > Copy everything below the line into a new Claude Code session opened at the repo root (`C:\Gloma\Tenent-Biz-System`).
 
 ---

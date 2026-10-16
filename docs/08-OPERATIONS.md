@@ -12,14 +12,14 @@
 |---|---|---|---|---|---|
 | APP_KEY | yes | ✓ | ✓ | ✓ | `php artisan key:generate --show`, different per env |
 | APP_ENV / APP_DEBUG | no | local / true | staging / false | production / false | |
-| APP_URL | no | http://localhost:8000 | https://uat.… | https://… | |
+| APP_URL | no | http://localhost:8000 | https://uat.… | https://… | used in password-reset links and product photo URLs: must be exact |
 | APP_VERSION | no | dev | set by CI (REVISION file) | — | optional |
 | DB_* | password yes | sqlite | ✓ | ✓ | MySQL 8 / MariaDB 10.6+ |
 | SANCTUM_STATEFUL_DOMAINS | no | localhost:5173,… | uat.… | … | the SPA host |
 | SESSION_SECURE_COOKIE | no | false | true | true | HTTPS only |
 | SESSION_DOMAIN | no | null | null | null | same domain |
 | QUEUE_CONNECTION / CACHE_STORE | no | database | database | database | redis on VPS |
-| MAIL_* | password yes | log | ✓ | ✓ | transactional provider + SPF/DKIM |
+| MAIL_* | password yes | log | ✓ | ✓ | transactional provider + SPF/DKIM. Also needed for **forgot password** emails |
 | SMS_DRIVER | no | log | textlk | textlk | |
 | TEXTLK_API_TOKEN | **yes** | — | ✓ | ✓ | |
 | TEXTLK_SENDER_ID | no | — | ✓ | ✓ | approval takes up to 3 business days |
@@ -46,7 +46,7 @@
 1. Quality gate: Pint → Larastan → Pest on SQLite → Pest on MySQL → SPIKE-1 concurrency test. Frontend typecheck, lint, test and build once `frontend/` exists.
 2. Build: `composer install --no-dev -o`; frontend built into `backend/public/app`.
 3. Upload to `releases/<timestamp-sha>/`, link `shared/.env` and `shared/storage`.
-4. `migrate --force` → seed reference data (idempotent) → `optimize` → **atomic symlink swap** of `current` → `queue:restart`.
+4. `migrate --force` → seed reference data (idempotent, also syncs new permissions) → `optimize` → `storage:link` (product photos) → **atomic symlink swap** of `current` → `queue:restart`.
 5. Health check `/api/v1/health` (5 tries). **On failure it rolls back automatically** to the previous release.
 6. The last 5 releases are kept.
 

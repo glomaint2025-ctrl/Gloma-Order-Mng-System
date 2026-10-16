@@ -84,3 +84,19 @@ Every decision, with date and reason. Newest at the bottom. Source of the first 
 | A15 | 2026-10-16 | Order numbers are per shop: `SHOPCODE-000001`. | Readable on labels and phone calls. |
 | A16 | 2026-10-16 | Session lifetime 8 hours, login throttle 5 per minute, API limit 240 requests per minute per user. | Common back-office defaults. |
 | A17 | 2026-10-16 | The SMS cost per segment is configured in `.env` (0.64 LKR). Sinhala and other Unicode text count at 70/67 characters. | D45, D46. |
+
+## After review and finalisation (2026-10-16)
+
+| # | Date | Decision | Reason |
+|---|---|---|---|
+| D54 | 2026-10-16 | **Minimal, server-driven UI.** The API sends labels, colour tones, `available_actions`, warnings and totals; screens never decide business rules. | The developer asked for a very simple UI (referenced in 03-FEATURES since day 1, logged here). |
+| D55 | 2026-10-16 | The frontend was built with Antigravity, then reviewed end to end against the real API. Six bugs were fixed (customer lookup/detail unwrap, live total, UTC dates, placeholders, guards), and contract tests now use the real backend response shapes. | Mocked tests had drifted from the real API. |
+| D56 | 2026-10-16 | Added before go-live: forgot/reset password by email, CSV exports (orders, ledger, sales report), a daily/monthly sales trend, product photos, and PDPA export/erase for one customer (admin, `privacy.manage`). Erase keeps amounts and the ledger. | Standard needs for a live back office; PDPA data-subject rights from 2027-01-01. |
+| D57 | 2026-10-16 | **Streamed responses must not rely on the tenant global scope.** CSV rows are produced after the `tenant` middleware ends, so exports filter by `shop_id` explicitly and `CsvExport` re-applies the shop during streaming. | A test caught cross-shop rows in an export; each protection is now tested on its own. |
+
+## Open business decisions (need the boss)
+
+| # | Question | Today | Why it waits |
+|---|---|---|---|
+| Q7 | **COD remittance batch:** record one courier payout covering many orders, minus the courier's fees? | Payment is recorded per order (A06). Courier charges are recorded at dispatch. | It changes how COD money is matched and reported. |
+| Q8 | **Part payments / partial returns** (customer keeps some items)? | Full payment only; a return covers the whole parcel (A05, A06). | It changes the money and stock rules. |

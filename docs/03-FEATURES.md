@@ -8,7 +8,8 @@ UI principle (D54): minimal, plain screens. The API sends labels, allowed action
 ### Everyone
 | Screen | Purpose | Data | Actions | Tag |
 |---|---|---|---|---|
-| Login | Sign in | email, password | log in | P1 M |
+| Login | Sign in | email, password | log in, "Forgot password?" | P1 M |
+| Forgot / reset password | Self-service reset by email | email; new password | send link, set password | P1 M |
 | Shop switcher | Pick a shop (owners with several shops; admin picks any shop) | my shops | switch | P1 M |
 
 ### Gloma admin
@@ -26,15 +27,16 @@ UI principle (D54): minimal, plain screens. The API sends labels, allowed action
 ### Inside a shop (admin and owner; admin-only items marked ★)
 | Screen | Purpose | Data | Actions | Tag |
 |---|---|---|---|---|
-| Shop dashboard | At-a-glance view | stock qty and value, money invested / spent / unspent, sales by Gloma vs shop, orders to act on, COD outstanding, returns | jump to lists | P1 M |
-| Products | Invested items | SKU, name, price, avg cost, stock (total and by location) | ★create, ★edit, ★deactivate | P1 M |
+| Shop dashboard | At-a-glance view | sales trend chart (daily or monthly, Gloma vs shop), stock qty and value, money invested / spent / unspent, sales by Gloma vs shop, orders to act on, COD outstanding, returns | jump to lists | P1 M |
+| Products | Invested items | photo, SKU, name, price, avg cost, stock (total and by location) | ★create, ★edit, ★deactivate, ★upload/remove photo | P1 M |
 | Stock | Levels and history | per product per location; movements with reason | ★adjust (correction, damage, handover), ★transfer, ★switch stock mode | P1 M |
 | Purchases | Stock bought with the shop's money | date, supplier, lines (product, qty, unit cost, location), total | ★record purchase; owner views | P1 M |
+| Exports | Work in Excel | orders (current filters), ledger with running balance, sales report | Export CSV | P1 S |
 | Orders list | Daily work | number, customer, total, status, payment, placed by, warning badge | filter, search, open, new order, new walk-in | P1 M |
 | New order / edit | Enter an order | customer phone (looked up with warnings), name, address, city, email, items, delivery fee, discount, payment method | save | P1 M |
 | Walk-in sale | Counter sale | items, payment method, optional customer | save (completes at once) | P1 M |
 | Order detail | One order | items, totals, customer warnings, status timeline, payment, tracking link, notes | only the buttons in `available_actions`: confirm, edit, pack, dispatch, deliver, return, cancel, record payment, refund, print invoice and label, add note | P1 M |
-| Customers | People who ordered | name, phone, orders, returns, risky flag | search, view history, flag or unflag risky with a note | P1 M |
+| Customers | People who ordered | name, phone, orders, returns, risky flag | search, view history, flag or unflag risky with a note, ★PDPA: download their data / erase (type ERASE) | P1 M |
 | Money | Ledger statement | entries, balance per side (Gloma / shop) | ★add entry (shop payment, payout, Gloma fee, adjustment) | P1 M |
 | Reports | Sales and profit | per product: bought, cost, sold by Gloma / shop, revenue, COGS, charges, gross profit; money held per side | date filter | P1 M |
 | Settings | Shop setup | payment methods, shop courier accounts, template overrides | add, edit, disable | P1 M |

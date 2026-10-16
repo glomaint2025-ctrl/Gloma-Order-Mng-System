@@ -28,11 +28,13 @@ The source of truth is `backend/routes/api.php` + `app/Http/Resources/*`, and th
 | POST | `/auth/logout` | — | `{message}` |
 | GET | `/auth/me` | — | **Me** |
 | POST | `/auth/password` | `{current_password, password, password_confirmation}` | `{message}` |
+| POST | `/auth/forgot-password` | `{email}` (public, throttled) | `{message}`, always the same answer (no account probing). Emails a link to `APP_URL/reset-password?token=…&email=…`, valid 60 min |
+| POST | `/auth/reset-password` | `{token, email, password, password_confirmation}` (public) | `{message}` · 422 on `email` if the link is invalid/expired/used |
 | GET | `/meta` | — | all enums, couriers, placeholders, currency, timezone, privacy_notice_url |
 | GET | `/health` | — | `{status, database, queue{pending,failed}, cron_last_run, version, time}` (public) |
 
 **Me** = `{ data: { user: User, is_admin, permissions: string[], shops: [{id, name, code, status, stock_mode, can_open}] } }`
-Permission names: `shops.manage users.manage couriers.manage templates.manage_global audit.view admin.reports products.manage stock.manage ledger.manage` (admin) · `orders.place orders.manage payments.record customers.manage shop.settings reports.view` (both).
+Permission names: `shops.manage users.manage couriers.manage templates.manage_global audit.view admin.reports products.manage stock.manage ledger.manage privacy.manage` (admin) · `orders.place orders.manage payments.record customers.manage shop.settings reports.view` (both).
 
 ## Inside a shop — prefix `/shops/{shop}`
 The user must be an admin or an owner of the shop; otherwise 404. Owners of a suspended shop get 403 `shop_suspended`. A closed shop is read-only for owners (409 `shop_closed` on writes).
@@ -40,10 +42,11 @@ The user must be an admin or an owner of the shop; otherwise 404. Owners of a su
 ### Dashboard & reports
 | Method | Path | Query | Returns |
 |---|---|---|---|
-| GET | `/dashboard` | `from, to` (default: this month) | `{period, stock{units,value,by_location{shared/gloma/shop},low_stock}, investment{received_from_shop,spent_on_stock,unspent,gloma_fees,paid_out}, sales{gloma{orders,units,revenue}, shop{…}}, open_orders{awaiting_confirmation,processing,packed,dispatched}, cod_outstanding{gloma{orders,amount}, shop{…}}, balances{gloma,shop}, returns}` |
+| GET | `/dashboard` | `from, to` (default: this month) | `{period, stock{units,value,by_location{shared/gloma/shop},low_stock}, investment{received_from_shop,spent_on_stock,unspent,gloma_fees,paid_out}, sales{gloma{orders,units,revenue}, shop{…}}, open_orders{awaiting_confirmation,processing,packed,dispatched}, cod_outstanding{gloma{orders,amount}, shop{…}}, balances{gloma,shop}, returns, trend{bucket: day|month, points:[{date (YYYY-MM-DD or YYYY-MM), orders, gloma, shop, total}]}}`. Trend is per day, or per month when the range is over 92 days, zero-filled |
 | GET | `/reports/sales` | `from, to` | `{period, products:[{product_id,sku,name,bought_qty,bought_cost,sold{gloma{qty,revenue},shop{qty,revenue}},revenue,cogs,gross_profit,returned_qty,damaged_qty,in_stock}], by_seller, totals{items_revenue,discounts,net_revenue,cost_of_goods_sold,delivery_fees_collected,courier_charges,return_charges,gross_profit}, note}` |
 | GET | `/ledger` | `party, type, from, to` | LedgerEntry list + `summary{by_type:[{party,type,total}], balances{gloma,shop}}` |
 | POST | `/ledger` ★ | `{type: shop_payment|gloma_fee|payout|adjustment, amount, party? (adjustment only, required), description, occurred_on?}` | LedgerEntry (201) |
+| GET | `/orders/export` · `/ledger/export` · `/reports/sales/export` | same filters as the list / report | CSV download (UTF-8 with BOM for Excel; formula-injection safe). Ledger CSV adds a running balance per side |
 | GET | `/messages` | `month=YYYY-MM, channel, status` | MessageLog list + `summary{month,sms_sent,sms_segments,sms_cost,failed}` |
 
 ### Products, stock, purchases (★ = Gloma admin only)
@@ -53,6 +56,7 @@ The user must be an admin or an owner of the shop; otherwise 404. Owners of a su
 | GET | `/products/{id}` | — | Product |
 | POST ★ | `/products` | `{sku, name, description?, price}` | Product (201) |
 | PATCH ★ | `/products/{id}` | any of `sku,name,description,price,is_active` | Product |
+| POST ★ / DELETE ★ | `/products/{id}/image` | multipart `image` (jpg/png/webp ≤ 2 MB, ≤ 4000 px) / — | Product (`image_url` set / null) |
 | GET | `/stock/movements` | `product_id, type, location` | StockMovement list (newest first) |
 | POST ★ | `/stock/adjustments` | `{product_id, type: correction|damage|handover, qty (±, only correction keeps the sign), location?, reason}` | StockMovement (201) |
 | POST ★ | `/stock/transfers` | `{product_id, from: gloma|shop, to, qty, reason?}` (by-location mode only) | `{data: Product}` (201) |
@@ -108,6 +112,8 @@ The user must be an admin or an owner of the shop; otherwise 404. Owners of a su
 | GET | `/customers/lookup` | `phone` | `{phone, phone_local, customer: Customer|null, warnings[]}`, used while typing on the order form · 422 `invalid_phone` |
 | GET | `/customers/{id}` | — | `{customer (with warnings), recent_orders: OrderListItem[]}` |
 | PATCH | `/customers/{id}` | `name,email,address,city,is_risky,risk_note` | Customer (with warnings) |
+| GET | `/customers/{id}/export` (`privacy.manage`) | — | JSON download: everything held about the customer (PDPA access request) |
+| POST | `/customers/{id}/erase` (`privacy.manage`) | `{confirm: "ERASE", reason}` | `{message}`. Removes identity/contact details from the customer, their orders, notes and message log; keeps amounts + ledger · 409 `already_erased` |
 
 ### Settings (admin + owner)
 | Method | Path | Body / query | Returns |
@@ -139,7 +145,7 @@ The user must be an admin or an owner of the shop; otherwise 404. Owners of a su
 ## Other resources
 - **User:** `id, name, email, phone, is_active, role{value,label}, shops?[{id,name,code}], last_login_at`
 - **Shop:** `id, name, code, status, stock_mode, is_read_only, contract_ref, contract_started_on, phone, email, address, notes (admin only), owners?, created_at`
-- **Product:** `id, sku, name, description, price, avg_cost, is_active, stock{total, by_location:[{location, qty}]}` (locations follow the shop's stock mode)
+- **Product:** `id, sku, name, description, image_url, price, avg_cost, is_active, stock{total, by_location:[{location, qty}]}` (locations follow the shop's stock mode)
 - **StockMovement:** `id, product{id,sku,name}, location, qty (±), type, reason, source{type,id}|null, user{id,name}, created_at`
 - **Purchase:** `id, reference, supplier, purchased_on, total, notes, lines_count?, lines?[{id, product, location, qty, unit_cost, line_total}], created_by, created_at`
 - **Customer:** `id, name, phone, phone_local, email, address, city, is_risky, risk_note, orders_count, returns_count, has_warning, warnings? (detail only), created_at`
