@@ -115,7 +115,7 @@ final class SettingsController extends Controller
     }
 
     /** Create or replace the shop's override for one event+channel. */
-    public function saveTemplate(Request $request, Shop $shop): MessageTemplateResource
+    public function saveTemplate(Request $request, Shop $shop): JsonResponse
     {
         $data = $request->validate([
             'event' => ['required', Rule::enum(MessageEvent::class)],
@@ -130,7 +130,7 @@ final class SettingsController extends Controller
         );
         $this->audit->log('template.saved', $template, $data, $shop->id);
 
-        return new MessageTemplateResource($template);
+        return (new MessageTemplateResource($template))->response()->setStatusCode(200);
     }
 
     /** Remove the shop override; the global default applies again. */

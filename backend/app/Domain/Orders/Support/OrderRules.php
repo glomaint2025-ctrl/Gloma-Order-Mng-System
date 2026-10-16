@@ -20,16 +20,27 @@ use App\Support\BusinessRuleException;
 final class OrderRules
 {
     public const EDIT = 'edit';
+
     public const CONFIRM = 'confirm';
+
     public const PACK = 'pack';
+
     public const DISPATCH = 'dispatch';
+
     public const DELIVER = 'deliver';
+
     public const RETURN = 'return';
+
     public const CANCEL = 'cancel';
+
     public const RECORD_PAYMENT = 'record_payment';
+
     public const REFUND = 'refund';
+
     public const ADD_NOTE = 'add_note';
+
     public const PRINT_INVOICE = 'print_invoice';
+
     public const PRINT_LABEL = 'print_label';
 
     /** @return list<string> */

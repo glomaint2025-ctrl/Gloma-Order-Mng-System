@@ -13,6 +13,7 @@ use App\Domain\Orders\Enums\PaymentStatus;
 use App\Domain\Shops\Enums\Party;
 use App\Domain\Shops\Tenancy\BelongsToShop;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -58,7 +59,7 @@ use Illuminate\Support\Carbon;
  * @property ?Customer $customer
  * @property ?PaymentMethod $paymentMethod
  * @property ?CourierAccount $courierAccount
- * @property \Illuminate\Database\Eloquent\Collection<int, OrderItem> $items
+ * @property Collection<int, OrderItem> $items
  */
 class Order extends Model
 {

@@ -39,7 +39,7 @@ final class SetupAdminController extends Controller
     {
         $courier->fill($request->validate([
             'name' => ['sometimes', 'string', 'max:80'],
-            'tracking_url_template' => ['sometimes', 'url', 'max:255', 'regex:/\{tracking\}/'],
+            'tracking_url_template' => ['sometimes', 'string', 'max:255', 'starts_with:https://,http://', 'regex:/\{tracking\}/'],
             'is_active' => ['sometimes', 'boolean'],
         ]))->save();
         Cache::forget('api.meta.v1');
@@ -76,7 +76,7 @@ final class SetupAdminController extends Controller
         return MessageTemplateResource::collection(MessageTemplate::query()->whereNull('shop_id')->orderBy('event')->orderBy('channel')->get());
     }
 
-    public function saveTemplate(Request $request): MessageTemplateResource
+    public function saveTemplate(Request $request): JsonResponse
     {
         $data = $request->validate([
             'event' => ['required', Rule::enum(MessageEvent::class)],
@@ -91,7 +91,7 @@ final class SetupAdminController extends Controller
         );
         $this->audit->log('template.saved', $template, $data);
 
-        return new MessageTemplateResource($template);
+        return (new MessageTemplateResource($template))->response()->setStatusCode(200);
     }
 
     /** Filters: shop_id, user_id, action (prefix, e.g. "order."), from, to. */

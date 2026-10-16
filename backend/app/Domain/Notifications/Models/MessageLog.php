@@ -10,6 +10,7 @@ use App\Domain\Orders\Models\Order;
 use App\Domain\Shops\Tenancy\BelongsToShop;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * Every SMS / email sent, per shop, with segments and cost so Gloma can bill shops for SMS (D45).
@@ -27,7 +28,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property ?string $provider_ref
  * @property ?string $error
  * @property int $attempts
- * @property \Illuminate\Support\Carbon $created_at
+ * @property Carbon $created_at
  */
 class MessageLog extends Model
 {

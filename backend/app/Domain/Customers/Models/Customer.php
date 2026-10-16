@@ -8,6 +8,7 @@ use App\Domain\Orders\Models\Order;
 use App\Domain\Shops\Tenancy\BelongsToShop;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * A shop's customer, unique per shop by E.164 phone (D44: history is per shop).
@@ -23,7 +24,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property ?string $risk_note
  * @property int $orders_count
  * @property int $returns_count
- * @property ?\Illuminate\Support\Carbon $anonymized_at
+ * @property ?Carbon $anonymized_at
  */
 class Customer extends Model
 {

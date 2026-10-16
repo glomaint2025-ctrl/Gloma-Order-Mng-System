@@ -15,11 +15,11 @@ class PaymentMethodResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            "id" => $this->id,
-            "name" => $this->name,
-            "kind" => $this->kind->toArray(),
-            "requires_slip" => $this->requires_slip,
-            "is_active" => $this->is_active,
+            'id' => $this->id,
+            'name' => $this->name,
+            'kind' => $this->kind->toArray(),
+            'requires_slip' => $this->requires_slip,
+            'is_active' => $this->is_active,
         ];
     }
 }

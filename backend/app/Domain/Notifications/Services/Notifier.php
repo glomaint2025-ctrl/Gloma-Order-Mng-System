@@ -71,7 +71,12 @@ final class Notifier
             $log->save();
 
             if ($log->status === 'queued') {
-                SendMessage::dispatch($log->id)->afterCommit();
+                try {
+                    SendMessage::dispatch($log->id)->afterCommit();
+                } catch (\Throwable $e) {
+                    // Only reachable with the sync queue: the job already marked the log; the order must not fail.
+                    report($e);
+                }
             }
         }
     }

@@ -15,13 +15,13 @@ class CourierAccountResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            "id" => $this->id,
-            "owner" => $this->owner()->toArray(),
-            "courier" => ["id" => $this->courier->id, "code" => $this->courier->code, "name" => $this->courier->name],
-            "label" => $this->label,
-            "account_ref" => $this->account_ref,
-            "default_charge" => $this->default_charge,
-            "is_active" => $this->is_active,
+            'id' => $this->id,
+            'owner' => $this->owner()->toArray(),
+            'courier' => ['id' => $this->courier->id, 'code' => $this->courier->code, 'name' => $this->courier->name],
+            'label' => $this->label,
+            'account_ref' => $this->account_ref,
+            'default_charge' => $this->default_charge,
+            'is_active' => $this->is_active,
         ];
     }
 }

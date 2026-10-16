@@ -20,7 +20,6 @@ use App\Support\BusinessRuleException;
 use App\Support\Money;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -68,8 +67,8 @@ final class FinanceController extends Controller
         $query = LedgerEntry::query()
             ->when($f['party'] ?? null, fn ($q, $v) => $q->where('party', $v))
             ->when($f['type'] ?? null, fn ($q, $v) => $q->where('type', $v))
-            ->when($f['from'] ?? null, fn ($q, $v) => $q->where('occurred_on', '>=', $v))
-            ->when($f['to'] ?? null, fn ($q, $v) => $q->where('occurred_on', '<=', $v));
+            ->when($f['from'] ?? null, fn ($q, $v) => $q->whereDate('occurred_on', '>=', $v))
+            ->when($f['to'] ?? null, fn ($q, $v) => $q->whereDate('occurred_on', '<=', $v));
 
         $byType = (clone $query)->groupBy('party', 'type')->select('party', 'type', DB::raw('sum(amount) as total'))->get()
             ->map(fn ($r) => ['party' => $r->party->toArray(), 'type' => $r->type->toArray(), 'total' => Money::of((string) $r->getAttribute('total'))]);

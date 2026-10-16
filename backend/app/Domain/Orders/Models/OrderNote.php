@@ -7,13 +7,14 @@ namespace App\Domain\Orders\Models;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
  * @property int $order_id
  * @property ?int $user_id
  * @property string $body
- * @property \Illuminate\Support\Carbon $created_at
+ * @property Carbon $created_at
  * @property ?User $user
  */
 class OrderNote extends Model

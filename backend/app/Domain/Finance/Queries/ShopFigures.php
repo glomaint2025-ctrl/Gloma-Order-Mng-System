@@ -13,6 +13,7 @@ use App\Domain\Orders\Enums\PaymentStatus;
 use App\Domain\Orders\Models\Order;
 use App\Domain\Shops\Enums\Party;
 use App\Support\Money;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -99,7 +100,11 @@ final class ShopFigures
         ];
     }
 
-    /** Delivered but not yet paid (COD still with the courier), per seller. @return array<string, array{orders: int, amount: string}> */
+    /**
+     * Delivered but not yet paid (COD still with the courier), per seller.
+     *
+     * @return array<string, array{orders: int, amount: string}>
+     */
     public function codOutstanding(int $shopId): array
     {
         $out = [];
@@ -114,7 +119,11 @@ final class ShopFigures
         return $out;
     }
 
-    /** Money currently in each side's hands from this deal (sum of ledger per party). @return array<string, string> */
+    /**
+     * Money currently in each side's hands from this deal (sum of ledger per party).
+     *
+     * @return array<string, string>
+     */
     public function balances(int $shopId): array
     {
         $sums = LedgerEntry::withoutGlobalScopes()->where('shop_id', $shopId)
@@ -135,8 +144,8 @@ final class ShopFigures
             ->whereBetween('returned_at', [$from, $to])->count();
     }
 
-    /** @return \Illuminate\Database\Eloquent\Builder<Order> */
-    public function soldOrders(int $shopId, Carbon $from, Carbon $to): \Illuminate\Database\Eloquent\Builder
+    /** @return Builder<Order> */
+    public function soldOrders(int $shopId, Carbon $from, Carbon $to): Builder
     {
         return Order::withoutGlobalScopes()->where('shop_id', $shopId)
             ->whereIn('status', OrderStatus::soldValues())

@@ -15,11 +15,11 @@ class CourierResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            "id" => $this->id,
-            "code" => $this->code,
-            "name" => $this->name,
-            "tracking_url_template" => $this->tracking_url_template,
-            "is_active" => $this->is_active,
+            'id' => $this->id,
+            'code' => $this->code,
+            'name' => $this->name,
+            'tracking_url_template' => $this->tracking_url_template,
+            'is_active' => $this->is_active,
         ];
     }
 }

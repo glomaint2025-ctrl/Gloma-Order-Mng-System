@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\Shop;
 
-use App\Domain\Orders\Actions\ChangeOrderStatus;
 use App\Domain\Orders\Actions\CancelOrder;
+use App\Domain\Orders\Actions\ChangeOrderStatus;
 use App\Domain\Orders\Actions\DispatchOrder;
 use App\Domain\Orders\Actions\OrderPayments;
 use App\Domain\Orders\Actions\PlaceOrder;
@@ -14,7 +14,6 @@ use App\Domain\Orders\Actions\UpdateOrder;
 use App\Domain\Orders\Enums\OrderStatus;
 use App\Domain\Orders\Models\Order;
 use App\Domain\Orders\Support\OrderRecorder;
-use App\Domain\Orders\Support\OrderRules;
 use App\Domain\Shops\Models\Shop;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderListResource;
@@ -25,6 +24,7 @@ use App\Support\Phone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -53,8 +53,8 @@ final class OrderController extends Controller
             ->when($f['payment_status'] ?? null, fn ($q, $v) => $q->where('payment_status', $v))
             ->when($f['seller'] ?? null, fn ($q, $v) => $q->where('seller', $v))
             ->when($f['channel'] ?? null, fn ($q, $v) => $q->where('channel', $v))
-            ->when($f['from'] ?? null, fn ($q, $v) => $q->where('created_at', '>=', \Illuminate\Support\Carbon::parse($v)->startOfDay()))
-            ->when($f['to'] ?? null, fn ($q, $v) => $q->where('created_at', '<=', \Illuminate\Support\Carbon::parse($v)->endOfDay()))
+            ->when($f['from'] ?? null, fn ($q, $v) => $q->where('created_at', '>=', Carbon::parse($v)->startOfDay()))
+            ->when($f['to'] ?? null, fn ($q, $v) => $q->where('created_at', '<=', Carbon::parse($v)->endOfDay()))
             ->when($request->boolean('needs_action'), fn ($q) => $q->whereIn('status', [
                 OrderStatus::AwaitingConfirmation->value, OrderStatus::Processing->value, OrderStatus::Packed->value,
             ]))
@@ -139,7 +139,10 @@ final class OrderController extends Controller
             'items.*.damaged_qty' => ['required', 'integer', 'min:0'],
         ]);
 
-        $damaged = collect($data['items'] ?? [])->mapWithKeys(fn ($i) => [(int) $i['order_item_id'] => (int) $i['damaged_qty']])->all();
+        $damaged = [];
+        foreach ((array) ($data['items'] ?? []) as $i) {
+            $damaged[(int) $i['order_item_id']] = (int) $i['damaged_qty'];
+        }
 
         return new OrderResource($action->handle($shop, $this->user($request), $order, $data['reason'], $damaged,
             isset($data['return_charge']) ? (string) $data['return_charge'] : null));

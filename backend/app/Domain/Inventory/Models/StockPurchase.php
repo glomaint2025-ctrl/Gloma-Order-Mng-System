@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * Stock bought by Gloma with the shop's invested money (D35).
@@ -17,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $shop_id
  * @property ?string $reference
  * @property ?string $supplier
- * @property \Illuminate\Support\Carbon $purchased_on
+ * @property Carbon $purchased_on
  * @property string $total
  * @property ?string $notes
  */

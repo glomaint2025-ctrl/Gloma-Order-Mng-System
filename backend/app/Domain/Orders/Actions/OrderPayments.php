@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Support\BusinessRuleException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 /** Record a full payment (COD remitted or prepaid with slip) or refund it (D17, D38). */
 final class OrderPayments
@@ -52,7 +53,7 @@ final class OrderPayments
             });
         } catch (\Throwable $e) {
             if ($slipPath) {
-                \Illuminate\Support\Facades\Storage::disk('local')->delete($slipPath);
+                Storage::disk('local')->delete($slipPath);
             }
             throw $e;
         }

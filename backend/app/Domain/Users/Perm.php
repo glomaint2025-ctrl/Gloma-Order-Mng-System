@@ -15,21 +15,34 @@ final class Perm
 
     // Gloma admin only
     public const SHOPS_MANAGE = 'shops.manage';
+
     public const USERS_MANAGE = 'users.manage';
+
     public const COURIERS_MANAGE = 'couriers.manage';
+
     public const TEMPLATES_GLOBAL = 'templates.manage_global';
+
     public const AUDIT_VIEW = 'audit.view';
+
     public const ADMIN_REPORTS = 'admin.reports';
+
     public const PRODUCTS_MANAGE = 'products.manage';
+
     public const STOCK_MANAGE = 'stock.manage';
+
     public const LEDGER_MANAGE = 'ledger.manage';
 
     // Both roles
     public const ORDERS_PLACE = 'orders.place';
+
     public const ORDERS_MANAGE = 'orders.manage';
+
     public const PAYMENTS_RECORD = 'payments.record';
+
     public const CUSTOMERS_MANAGE = 'customers.manage';
+
     public const SHOP_SETTINGS = 'shop.settings';
+
     public const REPORTS_VIEW = 'reports.view';
 
     /** @return list<string> */

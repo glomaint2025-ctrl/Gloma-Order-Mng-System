@@ -6,12 +6,13 @@ namespace App\Domain\Shops\Tenancy;
 
 use App\Domain\Shops\Models\Shop;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Tenant-owned model: auto-scoped to the current shop and auto-filled with shop_id.
  *
- * @mixin \Illuminate\Database\Eloquent\Model
+ * @mixin Model
  */
 trait BelongsToShop
 {

@@ -46,7 +46,11 @@ final class OrderRecorder
         ]), $order->shop_id);
     }
 
-    /** Moves the order to a new status, stamps the matching *_at column and records the event. */
+    /**
+     * Moves the order to a new status, stamps the matching *_at column and records the event.
+     *
+     * @param  array<string, mixed>  $meta
+     */
     public function transition(Order $order, OrderStatus $to, string $type, array $meta = []): void
     {
         $from = $order->status;

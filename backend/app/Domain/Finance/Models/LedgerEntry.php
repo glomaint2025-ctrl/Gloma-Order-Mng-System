@@ -11,6 +11,7 @@ use App\Domain\Shops\Tenancy\BelongsToShop;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * Append-only money ledger row (LKR, exact decimals).
@@ -23,9 +24,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property ?int $order_id
  * @property ?int $stock_purchase_id
  * @property ?string $description
- * @property \Illuminate\Support\Carbon $occurred_on
+ * @property Carbon $occurred_on
  * @property ?int $created_by
- * @property \Illuminate\Support\Carbon $created_at
+ * @property Carbon $created_at
  */
 class LedgerEntry extends Model
 {

@@ -15,17 +15,17 @@ class MessageLogResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            "id" => $this->id,
-            "order_id" => $this->order_id,
-            "event" => $this->event->toArray(),
-            "channel" => $this->channel->toArray(),
-            "recipient" => $this->recipient,
-            "body" => $this->body,
-            "segments" => $this->segments,
-            "cost" => $this->cost,
-            "status" => $this->status,
-            "error" => $this->error,
-            "created_at" => $this->created_at->toIso8601String(),
+            'id' => $this->id,
+            'order_id' => $this->order_id,
+            'event' => $this->event->toArray(),
+            'channel' => $this->channel->toArray(),
+            'recipient' => $this->recipient,
+            'body' => $this->body,
+            'segments' => $this->segments,
+            'cost' => $this->cost,
+            'status' => $this->status,
+            'error' => $this->error,
+            'created_at' => $this->created_at->toIso8601String(),
         ];
     }
 }

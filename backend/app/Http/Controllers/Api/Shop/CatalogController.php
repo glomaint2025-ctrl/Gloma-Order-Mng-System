@@ -142,7 +142,10 @@ final class CatalogController extends Controller
             'split.*.gloma' => ['required', 'integer', 'min:0'],
             'split.*.shop' => ['required', 'integer', 'min:0'],
         ]);
-        $split = collect($data['split'] ?? [])->mapWithKeys(fn ($s) => [(int) $s['product_id'] => ['gloma' => (int) $s['gloma'], 'shop' => (int) $s['shop']]])->all();
+        $split = [];
+        foreach ((array) ($data['split'] ?? []) as $s) {
+            $split[(int) $s['product_id']] = ['gloma' => (int) $s['gloma'], 'shop' => (int) $s['shop']];
+        }
 
         return new ShopResource($action->handle($shop, $this->user($request), StockMode::from($data['stock_mode']), $split));
     }

@@ -5,15 +5,18 @@ use App\Domain\Couriers\Models\Courier;
 use App\Domain\Couriers\Models\CourierAccount;
 use App\Domain\Inventory\Enums\MovementType;
 use App\Domain\Inventory\Enums\StockLocation;
+use App\Domain\Inventory\Models\StockLevel;
 use App\Domain\Inventory\Services\StockLedger;
 use App\Domain\Orders\Enums\PaymentMethodKind;
+use App\Domain\Orders\Models\Order;
 use App\Domain\Orders\Models\PaymentMethod;
 use App\Domain\Shops\Models\Shop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
+use Tests\TestCase;
 
-pest()->extend(Tests\TestCase::class)
+pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature');
 
@@ -66,7 +69,7 @@ function stockedProduct(Shop $shop, int $qty = 10, array $attributes = [], ?Stoc
 
 function stockOf(Product $product, ?StockLocation $location = null): int
 {
-    $q = \App\Domain\Inventory\Models\StockLevel::withoutGlobalScopes()->where('product_id', $product->id);
+    $q = StockLevel::withoutGlobalScopes()->where('product_id', $product->id);
     if ($location) {
         $q->where('location', $location->value);
     }
@@ -114,7 +117,7 @@ function advance(User $user, Shop $shop, int $orderId, string $until): TestRespo
     $response = null;
     foreach ($steps as $step) {
         $body = $step === 'dispatch'
-            ? ['courier_account_id' => \App\Domain\Orders\Models\Order::withoutGlobalScopes()->find($orderId)->seller->value === 'gloma'
+            ? ['courier_account_id' => Order::withoutGlobalScopes()->find($orderId)->seller->value === 'gloma'
                 ? (CourierAccount::query()->whereNull('shop_id')->value('id') ?? glomaCourierAccount()->id)
                 : (CourierAccount::query()->where('shop_id', $shop->id)->value('id') ?? shopCourierAccount($shop)->id),
                 'tracking_number' => 'TRK'.$orderId]

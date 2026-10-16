@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api;
 use App\Domain\Audit\Services\AuditLogger;
 use App\Domain\Shops\Enums\ShopStatus;
 use App\Domain\Shops\Models\Shop;
+use App\Domain\Users\Perm;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\User;
@@ -83,7 +84,7 @@ final class AuthController extends Controller
         return response()->json(['data' => [
             'user' => new UserResource($user),
             'is_admin' => $isAdmin,
-            'permissions' => $isAdmin ? \App\Domain\Users\Perm::all() : $user->getAllPermissions()->pluck('name')->values(),
+            'permissions' => $isAdmin ? Perm::all() : $user->getAllPermissions()->pluck('name')->values(),
             'shops' => $shops,
         ]]);
     }

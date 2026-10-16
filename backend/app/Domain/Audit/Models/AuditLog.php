@@ -8,6 +8,7 @@ use App\Domain\Shops\Models\Shop;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * Who changed what, and when (PDPA). Append-only.
@@ -20,7 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property ?int $subject_id
  * @property ?array<string, mixed> $changes
  * @property ?string $ip
- * @property \Illuminate\Support\Carbon $created_at
+ * @property Carbon $created_at
  */
 class AuditLog extends Model
 {

@@ -15,14 +15,14 @@ class AuditLogResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            "id" => $this->id,
-            "action" => $this->action,
-            "user" => $this->user ? ["id" => $this->user->id, "name" => $this->user->name] : null,
-            "shop" => $this->shop ? ["id" => $this->shop->id, "name" => $this->shop->name] : null,
-            "subject" => $this->subject_type ? ["type" => $this->subject_type, "id" => $this->subject_id] : null,
-            "changes" => $this->changes,
-            "ip" => $this->ip,
-            "created_at" => $this->created_at->toIso8601String(),
+            'id' => $this->id,
+            'action' => $this->action,
+            'user' => $this->user ? ['id' => $this->user->id, 'name' => $this->user->name] : null,
+            'shop' => $this->shop ? ['id' => $this->shop->id, 'name' => $this->shop->name] : null,
+            'subject' => $this->subject_type ? ['type' => $this->subject_type, 'id' => $this->subject_id] : null,
+            'changes' => $this->changes,
+            'ip' => $this->ip,
+            'created_at' => $this->created_at->toIso8601String(),
         ];
     }
 }

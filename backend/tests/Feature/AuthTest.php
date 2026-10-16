@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 it('logs in, returns me with shops, and logs out', function () {
     $shop = shop(['name' => 'Alpha']);
@@ -37,7 +38,8 @@ it('returns 401 JSON for guests', function () {
 });
 
 it('admin sees every shop and all permissions', function () {
-    shop(); shop();
+    shop();
+    shop();
     $this->actingAs(admin())->getJson('/api/v1/auth/me')
         ->assertOk()->assertJsonPath('data.is_admin', true)->assertJsonCount(2, 'data.shops')
         ->assertJsonFragment(['stock.manage']);
@@ -48,5 +50,5 @@ it('changes own password', function () {
     $this->actingAs($user)->postJson('/api/v1/auth/password', [
         'current_password' => 'password', 'password' => 'new-secret-1', 'password_confirmation' => 'new-secret-1',
     ])->assertOk();
-    expect(\Illuminate\Support\Facades\Hash::check('new-secret-1', $user->fresh()->password))->toBeTrue();
+    expect(Hash::check('new-secret-1', $user->fresh()->password))->toBeTrue();
 });

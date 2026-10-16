@@ -45,7 +45,7 @@ final class OrderDraft
 
         /** @var Collection<int, Product> $products */
         $products = Product::withoutGlobalScopes()->where('shop_id', $shopId)
-            ->whereIn('id', collect($data['items'])->pluck('product_id'))
+            ->whereIn('id', array_map(fn ($item) => (int) $item['product_id'], (array) $data['items']))
             ->get()->keyBy('id');
 
         $lines = [];

@@ -11,6 +11,7 @@ use Database\Factories\ShopFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -19,6 +20,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property ShopStatus $status
  * @property StockMode $stock_mode
  * @property int $order_seq
+ * @property ?string $contract_ref
+ * @property ?Carbon $contract_started_on
+ * @property ?string $phone
+ * @property ?string $email
+ * @property ?string $address
+ * @property ?string $notes
+ * @property ?Carbon $created_at
  */
 class Shop extends Model
 {

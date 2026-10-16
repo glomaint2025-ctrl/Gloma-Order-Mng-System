@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Audit\Models\AuditLog;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Finance\Models\LedgerEntry;
 use App\Domain\Inventory\Enums\StockLocation;
@@ -38,7 +39,7 @@ it('records a purchase: stock in, weighted average cost, ledger, audit', functio
     expect(stockOf($p))->toBe(20)
         ->and($p->fresh()->avg_cost)->toBe('150.00')
         ->and(LedgerEntry::withoutGlobalScopes()->where('type', 'purchase')->sum('amount'))->toEqual(-3000)
-        ->and(\App\Domain\Audit\Models\AuditLog::query()->where('action', 'purchase.recorded')->count())->toBe(2);
+        ->and(AuditLog::query()->where('action', 'purchase.recorded')->count())->toBe(2);
 
     $this->actingAs($this->owner)->getJson("{$this->base}/purchases")->assertOk()->assertJsonPath('data.0.total', '2000.00');
     $this->actingAs($this->owner)->postJson("{$this->base}/purchases", ['purchased_on' => now()->toDateString(), 'lines' => []])->assertForbidden();

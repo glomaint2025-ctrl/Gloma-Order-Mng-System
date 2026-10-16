@@ -34,7 +34,8 @@ final class SalesReport
         $bought = StockPurchaseLine::query()
             ->join('stock_purchases', 'stock_purchases.id', '=', 'stock_purchase_lines.stock_purchase_id')
             ->where('stock_purchases.shop_id', $shopId)
-            ->whereBetween('stock_purchases.purchased_on', [$from->toDateString(), $to->toDateString()])
+            ->whereDate('stock_purchases.purchased_on', '>=', $from->toDateString())
+            ->whereDate('stock_purchases.purchased_on', '<=', $to->toDateString())
             ->get(['stock_purchase_lines.product_id', 'stock_purchase_lines.qty', 'stock_purchase_lines.line_total']);
 
         $products = Product::withoutGlobalScopes()->where('shop_id', $shopId)->with('stockLevels')->orderBy('name')->get();
@@ -74,7 +75,7 @@ final class SalesReport
         $discounts = Money::of((string) (clone $sold)->sum('discount'));
         $deliveryFees = Money::of((string) (clone $sold)->sum('delivery_fee'));
         $charges = fn (LedgerType $t) => Money::abs((string) LedgerEntry::withoutGlobalScopes()->where('shop_id', $shopId)
-            ->where('type', $t->value)->whereBetween('occurred_on', [$from->toDateString(), $to->toDateString()])->sum('amount'));
+            ->where('type', $t->value)->whereDate('occurred_on', '>=', $from->toDateString())->whereDate('occurred_on', '<=', $to->toDateString())->sum('amount'));
         $courier = $charges(LedgerType::CourierCharge);
         $return = $charges(LedgerType::ReturnCharge);
 

@@ -1,8 +1,10 @@
 <?php
 
 use App\Domain\Finance\Models\LedgerEntry;
+use App\Domain\Inventory\Enums\MovementType;
 use App\Domain\Inventory\Enums\StockLocation;
 use App\Domain\Inventory\Models\StockMovement;
+use App\Domain\Inventory\Services\StockLedger;
 use App\Domain\Notifications\Jobs\SendMessage;
 use App\Domain\Notifications\Models\MessageLog;
 use App\Domain\Orders\Models\Order;
@@ -123,7 +125,7 @@ describe('stock location by seller', function () {
         $shop = shop(['stock_mode' => 'by_location']);
         $owner = ownerOf($shop);
         $product = stockedProduct($shop, 0);
-        app(\App\Domain\Inventory\Services\StockLedger::class)->move($product, StockLocation::Gloma, 2, \App\Domain\Inventory\Enums\MovementType::Correction, 't');
+        app(StockLedger::class)->move($product, StockLocation::Gloma, 2, MovementType::Correction, 't');
 
         placeOrder($owner, $shop, $product)->assertStatus(409)->assertJsonPath('code', 'insufficient_stock');
         placeOrder($this->admin, $shop, $product)->assertCreated()->assertJsonPath('data.items.0.location.value', 'gloma');

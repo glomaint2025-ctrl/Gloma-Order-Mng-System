@@ -7,6 +7,7 @@ namespace App\Domain\Orders\Models;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * Timeline row for an order ("Packed by Nimal at 10:42").
@@ -18,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property ?string $from_status
  * @property ?string $to_status
  * @property ?array<string, mixed> $meta
- * @property \Illuminate\Support\Carbon $created_at
+ * @property Carbon $created_at
  * @property ?User $user
  */
 class OrderEvent extends Model

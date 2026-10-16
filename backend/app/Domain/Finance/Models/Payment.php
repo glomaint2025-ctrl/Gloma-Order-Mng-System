@@ -10,6 +10,7 @@ use App\Domain\Shops\Tenancy\BelongsToShop;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property ?int $payment_method_id
  * @property ?string $reference
  * @property ?string $slip_path
- * @property \Illuminate\Support\Carbon $paid_at
+ * @property Carbon $paid_at
  */
 class Payment extends Model
 {

@@ -1,11 +1,14 @@
 <?php
 
 use App\Domain\Customers\Models\Customer;
+use App\Domain\Notifications\Contracts\SmsGateway;
 use App\Domain\Orders\Models\Order;
 use App\Domain\Users\Perm;
 use App\Models\User;
+use App\Support\Phone;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schedule;
 
 /*
@@ -60,9 +63,9 @@ Artisan::command('portal:anonymize-customers {--dry-run}', function () {
 })->purpose('PDPA retention: anonymise customers with no recent orders');
 
 Artisan::command('portal:test-notify {phone} {email}', function (string $phone, string $email) {
-    $sms = app(\App\Domain\Notifications\Contracts\SmsGateway::class);
-    $ref = $sms->send(\App\Support\Phone::normalize($phone) ?? $phone, config('app.name').' test SMS');
+    $sms = app(SmsGateway::class);
+    $ref = $sms->send(Phone::normalize($phone) ?? $phone, config('app.name').' test SMS');
     $this->info("SMS sent, ref {$ref}");
-    \Illuminate\Support\Facades\Mail::raw(config('app.name').' test email', fn ($m) => $m->to($email)->subject('Test email'));
+    Mail::raw(config('app.name').' test email', fn ($m) => $m->to($email)->subject('Test email'));
     $this->info('Email sent.');
 })->purpose('SPIKE-3: send one real SMS and one email with the configured providers');
