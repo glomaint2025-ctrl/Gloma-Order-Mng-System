@@ -10,20 +10,20 @@ export async function getCustomers(
 }
 
 export async function lookupCustomer(shopId: number, phone: string): Promise<CustomerLookupResult> {
-  const res = await apiClient.get<CustomerLookupResult>(`/shops/${shopId}/customers/lookup`, {
+  const res = await apiClient.get<{ data: CustomerLookupResult }>(`/shops/${shopId}/customers/lookup`, {
     params: { phone },
   })
-  return res.data
+  return res.data.data
 }
 
 export async function getCustomer(
   shopId: number,
   customerId: number
 ): Promise<{ customer: Customer; recent_orders: OrderListItem[] }> {
-  const res = await apiClient.get<{ customer: Customer; recent_orders: OrderListItem[] }>(
+  const res = await apiClient.get<{ data: { customer: Customer; recent_orders: OrderListItem[] } }>(
     `/shops/${shopId}/customers/${customerId}`
   )
-  return res.data
+  return res.data.data
 }
 
 export async function updateCustomer(

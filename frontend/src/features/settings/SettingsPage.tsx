@@ -751,14 +751,14 @@ export function SettingsPage() {
                   Available Placeholders (click to insert):
                 </span>
                 <div className="flex flex-wrap gap-1.5">
-                  {templatesData.placeholders[editingTemplateRow.event.value]?.map((ph) => (
+                  {templatesData.placeholders.map((ph) => (
                     <button
                       key={ph}
                       type="button"
-                      onClick={() => setTemplateBody((prev) => prev + ` {${ph}}`)}
+                      onClick={() => setTemplateBody((prev) => `${prev} ${ph}`)}
                       className="px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 font-mono text-[11px] transition-colors cursor-pointer"
                     >
-                      {`{${ph}}`}
+                      {ph}
                     </button>
                   ))}
                 </div>

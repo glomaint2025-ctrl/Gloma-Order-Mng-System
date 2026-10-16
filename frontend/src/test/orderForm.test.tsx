@@ -127,4 +127,20 @@ describe('OrderFormPage customer lookup & warnings', () => {
     expect(submitBtn).toBeInTheDocument()
     expect(submitBtn).not.toBeDisabled()
   })
+
+  it('updates the live subtotal and total when items change (regression: stale useMemo on watch)', async () => {
+    const user = userEvent.setup()
+    renderOrderForm()
+
+    const productSelect = await screen.findByLabelText('Product 1')
+    await waitFor(() => expect(screen.getByRole('option', { name: /Test Product/ })).toBeInTheDocument())
+    await user.selectOptions(productSelect, '1')
+
+    const qty = screen.getByLabelText('Quantity for item 1')
+    await user.clear(qty)
+    await user.type(qty, '2')
+
+    // 2 × 1,500.00 = 3,000.00 subtotal. Line total and summary subtotal both show it.
+    await waitFor(() => expect(screen.getAllByText(/3,000\.00/).length).toBeGreaterThanOrEqual(2))
+  })
 })

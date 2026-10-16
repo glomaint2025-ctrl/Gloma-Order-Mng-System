@@ -1,3 +1,4 @@
+import { monthStartYmd, todayYmd } from '@/lib/date'
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -21,8 +22,8 @@ export function ShopDashboardPage() {
 
   // Default to this month
   const now = new Date()
-  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
-  const today = now.toISOString().slice(0, 10)
+  const firstDay = monthStartYmd(now)
+  const today = todayYmd(now)
 
   const [from, setFrom] = useState(firstDay)
   const [to, setTo] = useState(today)

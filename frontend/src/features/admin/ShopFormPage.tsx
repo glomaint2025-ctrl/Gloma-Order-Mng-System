@@ -1,3 +1,4 @@
+import { todayYmd } from '@/lib/date'
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -30,7 +31,7 @@ export function ShopFormPage() {
   const [code, setCode] = useState('')
   const [stockMode, setStockMode] = useState<'single' | 'by_location'>('single')
   const [contractRef, setContractRef] = useState('')
-  const [contractStartedOn, setContractStartedOn] = useState(() => new Date().toISOString().slice(0, 10))
+  const [contractStartedOn, setContractStartedOn] = useState(() => todayYmd())
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [address, setAddress] = useState('')

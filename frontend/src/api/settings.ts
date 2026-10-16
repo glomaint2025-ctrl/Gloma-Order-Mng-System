@@ -59,8 +59,8 @@ export async function updateCourierAccount(
 
 export async function getTemplates(
   shopId: number
-): Promise<{ data: TemplateRow[]; placeholders: Record<string, string[]> }> {
-  const res = await apiClient.get<{ data: TemplateRow[]; placeholders: Record<string, string[]> }>(
+): Promise<{ data: TemplateRow[]; placeholders: string[] }> {
+  const res = await apiClient.get<{ data: TemplateRow[]; placeholders: string[] }>(
     `/shops/${shopId}/templates`
   )
   return res.data

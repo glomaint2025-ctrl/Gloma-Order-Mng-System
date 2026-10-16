@@ -155,14 +155,14 @@ export function GlobalTemplatesPage() {
                   Placeholders:
                 </span>
                 <div className="flex flex-wrap gap-1.5">
-                  {meta.template_placeholders[editingTemplate.event.value]?.map((ph) => (
+                  {meta.template_placeholders.map((ph) => (
                     <button
                       key={ph}
                       type="button"
-                      onClick={() => setBody((prev) => prev + ` {${ph}}`)}
+                      onClick={() => setBody((prev) => `${prev} ${ph}`)}
                       className="px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 font-mono text-[11px] cursor-pointer"
                     >
-                      {`{${ph}}`}
+                      {ph}
                     </button>
                   ))}
                 </div>

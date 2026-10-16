@@ -179,6 +179,7 @@ export function WalkInPage() {
                 <div className="flex-1">
                   <label className="block text-xs font-semibold text-gray-700 mb-1">Product</label>
                   <select
+                    aria-label={`Product ${index + 1}`}
                     className="w-full text-xs rounded-lg border border-gray-300 bg-white p-2 text-gray-900 focus:outline-none focus:ring-1 focus:ring-indigo-600"
                     value={watchedItems[index]?.product_id || ''}
                     onChange={(e) => handleProductChange(index, Number(e.target.value))}
@@ -198,6 +199,7 @@ export function WalkInPage() {
                     type="number"
                     min="1"
                     className="w-full text-xs rounded-lg border border-gray-300 bg-white p-2 text-gray-900 focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                    aria-label={`Quantity for item ${index + 1}`}
                     {...register(`items.${index}.qty`, { valueAsNumber: true })}
                   />
                 </div>
@@ -207,6 +209,7 @@ export function WalkInPage() {
                   <input
                     type="text"
                     className="w-full text-xs rounded-lg border border-gray-300 bg-white p-2 text-gray-900 focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                    aria-label={`Unit price for item ${index + 1}`}
                     {...register(`items.${index}.unit_price`)}
                   />
                 </div>

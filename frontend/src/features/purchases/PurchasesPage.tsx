@@ -11,7 +11,7 @@ import { MoneyDisplay } from '@/components/ui/MoneyDisplay'
 import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { toast } from '@/lib/toast'
-import { formatDate } from '@/lib/date'
+import { formatDate, todayYmd } from '@/lib/date'
 import { toCents, fromCents } from '@/lib/money'
 import { hasPermission } from '@/lib/permissions'
 import { Plus, Trash2, Eye } from 'lucide-react'
@@ -36,7 +36,7 @@ export function PurchasesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Form state
-  const [purchasedOn, setPurchasedOn] = useState(() => new Date().toISOString().slice(0, 10))
+  const [purchasedOn, setPurchasedOn] = useState(() => todayYmd())
   const [reference, setReference] = useState('')
   const [supplier, setSupplier] = useState('')
   const [notes, setNotes] = useState('')

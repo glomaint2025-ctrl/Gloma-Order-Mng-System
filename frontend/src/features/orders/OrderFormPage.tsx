@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useForm, useFieldArray } from 'react-hook-form'
@@ -108,7 +108,8 @@ export function OrderFormPage() {
   // Set default payment method when loaded
   useEffect(() => {
     if (paymentMethods && paymentMethods.length > 0 && !watchedPaymentMethodId) {
-      setValue('payment_method_id', paymentMethods[0].id)
+      // Default to cash on delivery when the shop has it (most orders are COD).
+      setValue('payment_method_id', (paymentMethods.find((m) => m.kind.value === 'cod') ?? paymentMethods[0]).id)
     }
   }, [paymentMethods, watchedPaymentMethodId, setValue])
 
@@ -171,25 +172,20 @@ export function OrderFormPage() {
     return () => clearTimeout(handler)
   }, [watchedPhone, parsedShopId, setValue])
 
-  // Live total calculation with integer cents
-  const totals = useMemo(() => {
-    let subtotalCents = 0
-    watchedItems.forEach((item) => {
-      const priceCents = toCents(item.unit_price || '0')
-      subtotalCents += priceCents * (item.qty || 1)
-    })
-
-    const feeCents = toCents(watchedDeliveryFee || '0')
-    const discCents = toCents(watchedDiscount || '0')
-    const totalCents = Math.max(0, subtotalCents + feeCents - discCents)
-
-    return {
-      subtotal: fromCents(subtotalCents),
-      deliveryFee: fromCents(feeCents),
-      discount: fromCents(discCents),
-      total: fromCents(totalCents),
-    }
-  }, [watchedItems, watchedDeliveryFee, watchedDiscount])
+  // Live total preview in integer cents. Computed every render on purpose: watch('items') returns the
+  // same array reference when a nested field changes, so a useMemo keyed on it would go stale.
+  let subtotalCents = 0
+  watchedItems.forEach((item) => {
+    subtotalCents += toCents(item.unit_price || '0') * (Number(item.qty) || 1)
+  })
+  const feeCents = toCents(watchedDeliveryFee || '0')
+  const discCents = toCents(watchedDiscount || '0')
+  const totals = {
+    subtotal: fromCents(subtotalCents),
+    deliveryFee: fromCents(feeCents),
+    discount: fromCents(discCents),
+    total: fromCents(Math.max(0, subtotalCents + feeCents - discCents)),
+  }
 
   const handleProductChange = (index: number, productId: number) => {
     const product = productsData?.data.find((p) => p.id === productId)
@@ -250,6 +246,20 @@ export function OrderFormPage() {
     return (
       <div className="py-20 flex justify-center">
         <Spinner size="lg" className="text-indigo-600" />
+      </div>
+    )
+  }
+
+  // The server decides editability (D16: until packed). Don't show a form that can only fail on save.
+  if (isEditing && existingOrder && !existingOrder.available_actions.includes('edit')) {
+    return (
+      <div className="max-w-xl mx-auto py-16 text-center space-y-3">
+        <AlertCircle className="w-8 h-8 text-amber-500 mx-auto" />
+        <h1 className="text-lg font-bold text-gray-900">Order {existingOrder.number} can't be changed now</h1>
+        <p className="text-sm text-gray-500">Orders can only be changed until they are packed.</p>
+        <Button type="button" onClick={() => navigate(`/shops/${parsedShopId}/orders/${parsedOrderId}`)}>
+          Back to order
+        </Button>
       </div>
     )
   }
@@ -373,6 +383,7 @@ export function OrderFormPage() {
                        Product {index + 1}
                     </label>
                     <select
+                      aria-label={`Product ${index + 1}`}
                       className="w-full text-xs rounded-lg border border-gray-300 bg-white p-2 text-gray-900 focus:outline-none focus:ring-1 focus:ring-indigo-600"
                       value={currentProductId || ''}
                       onChange={(e) => handleProductChange(index, Number(e.target.value))}
@@ -397,6 +408,7 @@ export function OrderFormPage() {
                       type="number"
                       min="1"
                       className="w-full text-xs rounded-lg border border-gray-300 bg-white p-2 text-gray-900 focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                      aria-label={`Quantity for item ${index + 1}`}
                       {...register(`items.${index}.qty`, { valueAsNumber: true })}
                     />
                   </div>
@@ -406,6 +418,7 @@ export function OrderFormPage() {
                     <input
                       type="text"
                       className="w-full text-xs rounded-lg border border-gray-300 bg-white p-2 text-gray-900 focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                      aria-label={`Unit price for item ${index + 1}`}
                       {...register(`items.${index}.unit_price`)}
                     />
                   </div>

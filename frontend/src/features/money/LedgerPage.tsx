@@ -12,7 +12,7 @@ import { MoneyDisplay } from '@/components/ui/MoneyDisplay'
 import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { toast } from '@/lib/toast'
-import { formatDate } from '@/lib/date'
+import { formatDate, todayYmd } from '@/lib/date'
 import { hasPermission } from '@/lib/permissions'
 import { Plus } from 'lucide-react'
 
@@ -33,7 +33,7 @@ export function LedgerPage() {
   const [amount, setAmount] = useState('')
   const [party, setParty] = useState<string>('shop')
   const [description, setDescription] = useState('')
-  const [occurredOn, setOccurredOn] = useState(() => new Date().toISOString().slice(0, 10))
+  const [occurredOn, setOccurredOn] = useState(() => todayYmd())
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const { data, isLoading, refetch } = useQuery({

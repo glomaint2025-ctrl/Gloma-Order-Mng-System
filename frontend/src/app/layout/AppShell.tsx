@@ -28,6 +28,10 @@ export function AppShell() {
   }
 
   const isAdminView = location.pathname.startsWith('/admin')
+  // The API already refuses admin data to owners (403); this keeps them off empty admin screens.
+  if (isAdminView && !me.is_admin) {
+    return <Navigate to="/" replace />
+  }
   const isShopClosed = currentShop?.status.value === 'closed'
 
   return (

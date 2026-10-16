@@ -577,7 +577,7 @@ export interface MetaData {
   payment_method_kinds: EnumOption[]
   message_events: EnumOption[]
   message_channels: EnumOption[]
-  template_placeholders: Record<string, string[]>
+  template_placeholders: string[]
   couriers: Courier[]
   currency: string
   timezone: string
