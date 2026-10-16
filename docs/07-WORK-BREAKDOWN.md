@@ -20,4 +20,4 @@ One task = one branch = one PR (about 15 minutes to review). The riskiest work a
 | T13 | Ops: health endpoint, scheduler (queue via cron, retention), deploy workflows (main → prod, uat → uat), SPIKE-1 script | .github, routes/console | workflow YAML lint passes; health test passes |
 | T14 | Docs: API.md, 08, 09, FE handover prompt | docs | handover is complete enough for a fresh session |
 
-**Status:** built in one autonomous run on 2026-10-16 (D50). Because there's no remote yet (D53), the branch and PR flow begins once the developer adds GitHub.
+**Status (2026-10-16):** T00–T14 all done in one autonomous run (D50) as local commits on `main` (a `uat` branch was created from it). There is no remote yet (D53); the branch and PR flow begins once the developer adds the private GitHub remote. Frontend tasks: docs/FRONTEND-HANDOVER.md.

@@ -1,0 +1,67 @@
+# Local development (optional — XAMPP/PHP + SQLite also works). Mirrors production: PHP 8.2 + MySQL 8.
+#   docker compose up -d --build
+#   docker compose exec app php artisan migrate --seed --seeder=DemoSeeder
+#   API: http://localhost:8000/api/v1   Mailpit: http://localhost:8025
+services:
+  app:
+    build: ./backend
+    volumes:
+      - ./backend:/var/www/html
+    ports:
+      - "8000:8000"
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: gloma_portal
+      DB_USERNAME: portal
+      DB_PASSWORD: portal
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  scheduler:
+    build: ./backend
+    volumes:
+      - ./backend:/var/www/html
+    command: ["php", "artisan", "schedule:work"]
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_DATABASE: gloma_portal
+      DB_USERNAME: portal
+      DB_PASSWORD: portal
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: gloma_portal
+      MYSQL_USER: portal
+      MYSQL_PASSWORD: portal
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-uroot", "-proot", "--silent"]
+      interval: 5s
+      retries: 20
+
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "8025:8025"
+
+volumes:
+  mysql-data:

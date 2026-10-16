@@ -7,6 +7,8 @@ namespace Database\Seeders;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Couriers\Models\Courier;
 use App\Domain\Couriers\Models\CourierAccount;
+use App\Domain\Finance\Enums\LedgerType;
+use App\Domain\Finance\Services\MoneyLedger;
 use App\Domain\Inventory\Actions\RecordPurchase;
 use App\Domain\Shops\Actions\ManageShops;
 use App\Domain\Shops\Models\Shop;
@@ -56,6 +58,9 @@ class DemoSeeder extends Seeder
             ['sku' => 'TSHIRT-WHT-L', 'name' => 'White T-shirt (L)', 'price' => '2500.00'],
             ['sku' => 'CAP-RED', 'name' => 'Red cap', 'price' => '1800.00'],
         ])->map(fn ($p) => Product::create($p + ['shop_id' => $shop->id]));
+
+        // The shop pays Gloma before each purchase (D09).
+        app(MoneyLedger::class)->record($shop->id, LedgerType::ShopPayment, '80000', null, 'Initial investment (contract GL-2026-001)', [], $admin->id);
 
         app(RecordPurchase::class)->handle($shop, $admin, [
             'reference' => 'PO-1001',

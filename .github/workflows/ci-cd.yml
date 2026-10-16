@@ -1,0 +1,155 @@
+name: CI / CD
+
+# Quality bar on every push and PR. Deploys: push to `uat` → UAT folder, push to `main` → production folder (D52).
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  backend:
+    name: Backend quality (pint, larastan, pest on SQLite + MySQL)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: portal_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -uroot -proot --silent" --health-interval=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, bcmath, intl, gd, zip, pdo_mysql, pdo_sqlite
+          coverage: none
+      - uses: actions/cache@v4
+        with:
+          path: backend/vendor
+          key: composer-${{ hashFiles('backend/composer.lock') }}
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: cp .env.example .env && php artisan key:generate
+      - name: Format (pint)
+        run: vendor/bin/pint --test
+      - name: Static analysis (larastan level 6)
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+      - name: Tests on SQLite
+        run: vendor/bin/pest
+      - name: Tests on MySQL 8 (row locks, real SQL)
+        run: vendor/bin/pest
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: portal_test
+          DB_USERNAME: root
+          DB_PASSWORD: root
+      - name: SPIKE-1 concurrency check (10 parallel sellers, last unit)
+        run: |
+          php artisan migrate:fresh --seed --force
+          bash scripts/spike-concurrency.sh
+        env:
+          APP_ENV: local
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: portal_test
+          DB_USERNAME: root
+          DB_PASSWORD: root
+
+  frontend:
+    name: Frontend quality
+    runs-on: ubuntu-latest
+    if: ${{ hashFiles('frontend/package.json') != '' }}
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+      - run: pnpm run lint
+      - run: pnpm run test
+      - run: pnpm run build
+
+  deploy:
+    name: Deploy (${{ github.ref_name == 'main' && 'production' || 'uat' }})
+    needs: [backend, frontend]
+    if: >-
+      always() && github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'uat')
+      && needs.backend.result == 'success' && (needs.frontend.result == 'success' || needs.frontend.result == 'skipped')
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'production' || 'uat' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, bcmath, intl, gd, zip
+          coverage: none
+
+      - name: Build frontend into backend/public/app (when it exists)
+        if: ${{ hashFiles('frontend/package.json') != '' }}
+        run: |
+          corepack enable
+          cd frontend && pnpm install --frozen-lockfile && pnpm run build
+
+      - name: Install production PHP dependencies
+        working-directory: backend
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress
+
+      - name: Package release
+        run: |
+          echo "${GITHUB_SHA::7}" > backend/REVISION
+          tar --exclude='./tests' --exclude='./storage' --exclude='./.env' --exclude='./database/database.sqlite' \
+              --exclude='./node_modules' -czf release.tgz -C backend .
+
+      - name: Upload and activate on the server
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          PHP_BIN: ${{ secrets.PHP_BIN }}
+        run: |
+          mkdir -p ~/.ssh && echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -p "${SSH_PORT:-22}" "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          SSH="ssh -i ~/.ssh/id_deploy -p ${SSH_PORT:-22} $SSH_USER@$SSH_HOST"
+          RELEASE="$(date -u +%Y%m%d%H%M%S)-${GITHUB_SHA::7}"
+          $SSH "mkdir -p '$DEPLOY_PATH/releases/$RELEASE'"
+          scp -i ~/.ssh/id_deploy -P "${SSH_PORT:-22}" release.tgz deploy/remote-deploy.sh "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/releases/$RELEASE/"
+          $SSH "bash '$DEPLOY_PATH/releases/$RELEASE/remote-deploy.sh' '$DEPLOY_PATH' '$RELEASE' '${PHP_BIN:-php}'"
+
+      - name: Health check (auto-rollback on failure)
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          PHP_BIN: ${{ secrets.PHP_BIN }}
+        run: |
+          for i in 1 2 3 4 5; do
+            if curl -fsS "$APP_URL/api/v1/health" | grep -q '"status":"ok"'; then echo "Healthy"; exit 0; fi
+            sleep 6
+          done
+          echo "Health check failed — rolling back"
+          ssh -i ~/.ssh/id_deploy -p "${SSH_PORT:-22}" "$SSH_USER@$SSH_HOST" "bash '$DEPLOY_PATH/rollback.sh' '$DEPLOY_PATH' '${PHP_BIN:-php}'"
+          exit 1

@@ -6,7 +6,7 @@ Run these before relying on the risky parts. Results are logged at the bottom of
 - **Risk:** Gloma and the shop sell the last unit at the same moment and stock goes to −1. SQLite (used in unit tests) ignores `FOR UPDATE`, so the unit tests can't prove this.
 - **Test:** run MySQL 8 in Docker, seed 1 unit, start 10 parallel PHP processes that each place a 1-unit order. Pass = exactly 1 order succeeds and stock = 0.
 - **Script:** `backend/scripts/spike-concurrency.sh`.
-- **Result:** see the "Spike results" section in docs/09-TESTING.md.
+- **Result (2026-10-16): PASS.** MySQL 8.0.46 in Docker, 12 parallel sellers (owner + admin mixed), 3 runs: each time exactly 1 order sold, 11 refused with `insufficient_stock`, stock = 0, no deadlocks. CI runs it on every push.
 
 ## SPIKE-2: Courier tracking links
 - **Risk:** the URL patterns for Koombiyo, Fardar and Royal Express are guesses, so customers get broken links.

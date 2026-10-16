@@ -62,3 +62,25 @@ Every decision, with date and reason. Newest at the bottom. Source of the first 
 | D51 | 2026-10-16 | Stack: latest stable. Laravel 12 API (clean architecture: domain, application, infrastructure, HTTP), React 19 + TypeScript + Vite SPA, pnpm, Pest, Vitest. Docker Compose for local dev. Must run on the **ServerByte Blazer shared plan**. | Developer answer. |
 | D52 | 2026-10-16 | CI/CD: a push to `main` auto-deploys to the production folder, and a push to `uat` auto-deploys to the UAT folder (on the uat subdomain). The developer sets up the server folders later. | Developer answer. |
 | D53 | 2026-10-16 | Nothing is pushed to any remote, and nothing is ever done under the harmonycentermedia identity. Commits use the developer's private git identity. The developer adds the GitHub remote. | Developer instruction. |
+
+## ASSUMED during the autonomous build (2026-10-16): industry-standard choices, confirm or change
+
+| # | Date | Assumption | Reason |
+|---|---|---|---|
+| A01 | 2026-10-16 | The courier tracking URL patterns are guesses. They're editable in Admin → Couriers (must contain `{tracking}`). | No official docs yet (SPIKE-2). |
+| A02 | 2026-10-16 | Text.lk API shape: `POST /api/v3/sms/send`, Bearer token, `recipient` without `+`. | Common Text.lk v3 usage. Verify with `portal:test-notify` (SPIKE-3). |
+| A03 | 2026-10-16 | Customer data retention is 5 years without orders, then anonymised monthly (`portal:anonymize-customers`). | PDPA needs a rule. The lawyer confirms the period. |
+| A04 | 2026-10-16 | A shop owner can run the lifecycle only on the **shop's** orders. Gloma admin can act on all. The owner still sees Gloma's orders. | D17/D33: each side calls and ships its own orders. |
+| A05 | 2026-10-16 | Edit until packed (D16); **cancel until packed**. After dispatch, use the return flow. | Standard commerce rule (Medusa, Shopify). |
+| A06 | 2026-10-16 | Payments are recorded as the **full order total** (no part payments in phase 1). Refund = full. | Keeps COD and money simple. |
+| A07 | 2026-10-16 | "Sold" = delivered or walk-in completed, dated by `delivered_at`. COGS uses the **weighted average cost** stored on each order line. FIFO per purchase batch is phase 2. | Standard inventory costing. Accurate enough for gross profit. |
+| A08 | 2026-10-16 | Every delivery order starts as "Awaiting confirmation" (one confirm step for COD and prepaid). | One simple flow (D17 confirmation call). |
+| A09 | 2026-10-16 | A new shop gets 3 starting payment methods: Cash on delivery, Bank transfer (slip required), Cash. | Fewer setup steps. All editable (D38). |
+| A10 | 2026-10-16 | The courier charge is recorded at dispatch (default per courier account, editable) as an expense on the seller's side. The return charge is recorded at return. | The money ledger needs costs per order (D24). |
+| A11 | 2026-10-16 | Ledger sides: `party` = whose hands the money is in. Gloma side: shop payments (+), purchases (−), Gloma fees (+), payouts (−). Each seller side: order payments (+), refunds, courier and return charges (−). | Shows "how much each side holds" (D37) without split maths (D34). |
+| A12 | 2026-10-16 | A closed shop is read-only for its owner. Gloma admin can still record the handover and ledger entries. | Contract end flow (D25, D26). |
+| A13 | 2026-10-16 | The React SPA is built into `backend/public/app` and served by Laravel: one domain, one deploy, cookie auth. | Shared hosting + Sanctum SPA (D29). |
+| A14 | 2026-10-16 | Deploy over SSH with release folders + an atomic symlink + auto-rollback on a failed health check. If the Blazer plan has no SSH, switch the upload step to FTP (SPIKE-3). | D52 + zero-downtime deploys on shared hosting. |
+| A15 | 2026-10-16 | Order numbers are per shop: `SHOPCODE-000001`. | Readable on labels and phone calls. |
+| A16 | 2026-10-16 | Session lifetime 8 hours, login throttle 5 per minute, API limit 240 requests per minute per user. | Common back-office defaults. |
+| A17 | 2026-10-16 | The SMS cost per segment is configured in `.env` (0.64 LKR). Sinhala and other Unicode text count at 70/67 characters. | D45, D46. |

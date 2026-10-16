@@ -39,6 +39,6 @@ final class OrderDocuments
             'orders' => $orders,
             'shops' => $shops,
             'company' => config('portal.company_name'),
-        ])->setPaper($paper)->output();
+        ])->setPaper($paper)->setOption('enable_font_subsetting', true)->output();
     }
 }
