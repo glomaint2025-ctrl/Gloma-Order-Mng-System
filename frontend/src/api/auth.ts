@@ -24,3 +24,20 @@ export async function changePassword(payload: {
   const res = await apiClient.post<{ message: string }>('/auth/password', payload)
   return res.data
 }
+
+export async function forgotPassword(email: string): Promise<{ message: string }> {
+  await initCsrf()
+  const res = await apiClient.post<{ message: string }>('/auth/forgot-password', { email })
+  return res.data
+}
+
+export async function resetPassword(payload: {
+  token: string
+  email: string
+  password: string
+  password_confirmation: string
+}): Promise<{ message: string }> {
+  await initCsrf()
+  const res = await apiClient.post<{ message: string }>('/auth/reset-password', payload)
+  return res.data
+}

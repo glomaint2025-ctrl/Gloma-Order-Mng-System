@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { apiError } from '@/lib/apiError'
 import { deliverOrder } from '@/api/orders'
 import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
@@ -30,8 +31,8 @@ export function DeliverDialog({ isOpen, onClose, order, shopId, onSuccess }: Del
       toast.show('Order marked as Delivered.', 'success')
       onSuccess()
       onClose()
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to mark as delivered.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to mark as delivered.', 'danger')
     } finally {
       setIsSubmitting(false)
     }

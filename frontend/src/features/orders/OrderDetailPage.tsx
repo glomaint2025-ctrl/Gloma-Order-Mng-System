@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { apiError } from '@/lib/apiError'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getOrder, confirmOrder, packOrder, addOrderNote } from '@/api/orders'
@@ -95,8 +96,8 @@ export function OrderDetailPage() {
       await confirmOrder(parsedShopId, order.id)
       toast.show('Order confirmed after customer phone call.', 'success')
       refetch()
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to confirm order.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to confirm order.', 'danger')
     } finally {
       setIsActionLoading(false)
     }
@@ -108,8 +109,8 @@ export function OrderDetailPage() {
       await packOrder(parsedShopId, order.id)
       toast.show('Order marked as Packed and ready for dispatch.', 'success')
       refetch()
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to pack order.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to pack order.', 'danger')
     } finally {
       setIsActionLoading(false)
     }
@@ -124,8 +125,8 @@ export function OrderDetailPage() {
       setNewNote('')
       toast.show('Note added to order.', 'success')
       refetch()
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to add note.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to add note.', 'danger')
     } finally {
       setIsAddingNote(false)
     }

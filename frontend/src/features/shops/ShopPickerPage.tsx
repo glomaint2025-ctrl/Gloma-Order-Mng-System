@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '@/app/authContext'
+import { useAuth } from '@/app/useAuth'
 import { Badge } from '@/components/ui/Badge'
 import { Store, ChevronRight, AlertCircle, ArrowLeft } from 'lucide-react'
 import type { ShopSummary } from '@/api/types'

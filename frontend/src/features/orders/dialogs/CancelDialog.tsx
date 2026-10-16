@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { apiError } from '@/lib/apiError'
 import { cancelOrder } from '@/api/orders'
 import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
@@ -33,8 +34,8 @@ export function CancelDialog({ isOpen, onClose, order, shopId, onSuccess }: Canc
       toast.show('Order cancelled. Stock has been returned.', 'info')
       onSuccess()
       onClose()
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to cancel order.')
+    } catch (err) {
+      setError(apiError(err).message || 'Failed to cancel order.')
     } finally {
       setIsSubmitting(false)
     }

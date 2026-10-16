@@ -32,7 +32,9 @@ apiClient.interceptors.response.use(
 
     // 401 Unauthenticated
     if (status === 401) {
-      if (!window.location.pathname.includes('/login')) {
+      // Pages that work without a login (the reset link from the email lands on /reset-password).
+      const publicPaths = ['/login', '/forgot-password', '/reset-password']
+      if (!publicPaths.some((p) => window.location.pathname.startsWith(p))) {
         window.location.href = '/login'
       }
       return Promise.reject(error)

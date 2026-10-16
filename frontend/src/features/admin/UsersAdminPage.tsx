@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import { apiError } from '@/lib/apiError'
 import { useQuery } from '@tanstack/react-query'
 import { getAdminUsers, createAdminUser, updateAdminUser } from '@/api/admin'
-import { useAuth } from '@/app/authContext'
+import { useAuth } from '@/app/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -59,7 +60,7 @@ export function UsersAdminPage() {
     setName(user.name)
     setEmail(user.email)
     setPhone(user.phone || '')
-    setRole(user.role.value as any)
+    setRole(user.role.value as 'gloma_admin' | 'shop_owner')
     setPassword('')
     setIsActive(user.is_active)
     setIsDialogOpen(true)
@@ -97,8 +98,8 @@ export function UsersAdminPage() {
       }
       setIsDialogOpen(false)
       refetch()
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to save user.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to save user.', 'danger')
     } finally {
       setIsSubmitting(false)
     }
@@ -270,7 +271,7 @@ export function UsersAdminPage() {
               <Select
                 label="System Role"
                 value={role}
-                onChange={(e) => setRole(e.target.value as any)}
+                onChange={(e) => setRole(e.target.value as 'gloma_admin' | 'shop_owner')}
                 required
               >
                 <option value="shop_owner">Shop Owner</option>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { apiError } from '@/lib/apiError'
 import { useQuery } from '@tanstack/react-query'
 import { getGlobalTemplates, saveGlobalTemplate } from '@/api/admin'
 import { getMeta } from '@/api/meta'
@@ -49,8 +50,8 @@ export function GlobalTemplatesPage() {
       toast.show('Global default template saved.', 'success')
       setEditingTemplate(null)
       refetch()
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to save template.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to save template.', 'danger')
     } finally {
       setIsSubmitting(false)
     }

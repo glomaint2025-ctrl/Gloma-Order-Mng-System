@@ -1,4 +1,8 @@
 import { useState } from 'react'
+import { CustomerPrivacyCard } from './CustomerPrivacyCard'
+import { useAuth } from '@/app/useAuth'
+import { hasPermission } from '@/lib/permissions'
+import { apiError } from '@/lib/apiError'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getCustomer, updateCustomer } from '@/api/customers'
@@ -17,6 +21,8 @@ export function CustomerDetailPage() {
   const parsedShopId = parseInt(shopId || '0', 10)
   const parsedCustomerId = parseInt(customerId || '0', 10)
   const navigate = useNavigate()
+  const { me } = useAuth()
+  const canManagePrivacy = hasPermission('privacy.manage', me)
 
   const [isRisky, setIsRisky] = useState(false)
   const [riskNote, setRiskNote] = useState('')
@@ -54,8 +60,8 @@ export function CustomerDetailPage() {
       })
       toast.show('Customer risk status updated.', 'success')
       refetch()
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to update customer.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to update customer.', 'danger')
     } finally {
       setIsSavingRisk(false)
     }
@@ -229,6 +235,10 @@ export function CustomerDetailPage() {
           </div>
         )}
       </div>
+
+      {canManagePrivacy && (
+        <CustomerPrivacyCard shopId={parsedShopId} customerId={customer.id} customerName={customer.name} />
+      )}
     </div>
   )
 }

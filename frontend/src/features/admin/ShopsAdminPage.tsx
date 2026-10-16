@@ -1,8 +1,9 @@
 import { useState } from 'react'
+import { apiError } from '@/lib/apiError'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getAdminShops, setAdminShopStatus } from '@/api/admin'
-import { useAuth } from '@/app/authContext'
+import { useAuth } from '@/app/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Dialog } from '@/components/ui/Dialog'
@@ -52,8 +53,8 @@ export function ShopsAdminPage() {
       setTargetStatus(null)
       await refreshMe()
       refetch()
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to update shop status.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to update shop status.', 'danger')
     } finally {
       setIsUpdatingStatus(false)
     }

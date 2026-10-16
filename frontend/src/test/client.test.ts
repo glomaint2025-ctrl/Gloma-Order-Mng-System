@@ -21,7 +21,7 @@ describe('apiClient response interceptor', () => {
     } as AxiosError
 
     // @ts-expect-error accessing private interceptor handler
-    const errorHandler = apiClient.interceptors.response.handlers[0]?.rejected as (err: any) => Promise<any>
+    const errorHandler = apiClient.interceptors.response.handlers[0]?.rejected as (err: unknown) => Promise<unknown>
 
     await expect(errorHandler(error)).rejects.toBe(error)
     expect(toastSpy).toHaveBeenCalledWith('This order was modified by another user.', 'danger')
@@ -39,7 +39,7 @@ describe('apiClient response interceptor', () => {
     } as AxiosError
 
     // @ts-expect-error accessing private interceptor handler
-    const errorHandler = apiClient.interceptors.response.handlers[0]?.rejected as (err: any) => Promise<any>
+    const errorHandler = apiClient.interceptors.response.handlers[0]?.rejected as (err: unknown) => Promise<unknown>
 
     await expect(errorHandler(error)).rejects.toBe(error)
     expect(toastSpy).toHaveBeenCalledWith('You do not have permission to perform this action.', 'danger')
@@ -57,7 +57,7 @@ describe('apiClient response interceptor', () => {
     } as AxiosError
 
     // @ts-expect-error accessing private interceptor handler
-    const errorHandler = apiClient.interceptors.response.handlers[0]?.rejected as (err: any) => Promise<any>
+    const errorHandler = apiClient.interceptors.response.handlers[0]?.rejected as (err: unknown) => Promise<unknown>
 
     await expect(errorHandler(error)).rejects.toBe(error)
     expect(toastSpy).toHaveBeenCalledWith('Too many login attempts. Please try again in 50 seconds.', 'warning')
@@ -75,7 +75,7 @@ describe('apiClient response interceptor', () => {
     } as AxiosError
 
     // @ts-expect-error accessing private interceptor handler
-    const errorHandler = apiClient.interceptors.response.handlers[0]?.rejected as (err: any) => Promise<any>
+    const errorHandler = apiClient.interceptors.response.handlers[0]?.rejected as (err: unknown) => Promise<unknown>
 
     await expect(errorHandler(error)).rejects.toBe(error)
     expect(toastSpy).toHaveBeenCalledWith('Shop is currently suspended.', 'warning')
@@ -96,7 +96,7 @@ describe('apiClient response interceptor', () => {
     } as AxiosError
 
     // @ts-expect-error accessing private interceptor handler
-    const errorHandler = apiClient.interceptors.response.handlers[0]?.rejected as (err: any) => Promise<any>
+    const errorHandler = apiClient.interceptors.response.handlers[0]?.rejected as (err: unknown) => Promise<unknown>
 
     await expect(errorHandler(error)).rejects.toBe(error)
     expect(toastSpy).not.toHaveBeenCalled()

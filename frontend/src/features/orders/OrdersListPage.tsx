@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ExportButton } from '@/components/ui/ExportButton'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getOrders, printOrders } from '@/api/orders'
@@ -99,6 +100,17 @@ export function OrdersListPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <ExportButton
+            url={`/shops/${parsedShopId}/orders/export`}
+            params={{
+              search: search || undefined,
+              status: status || undefined,
+              payment_status: paymentStatus || undefined,
+              seller: seller || undefined,
+              channel: channel || undefined,
+              needs_action: needsAction ? 1 : undefined,
+            }}
+          />
           <Button
             variant="outline"
             size="sm"

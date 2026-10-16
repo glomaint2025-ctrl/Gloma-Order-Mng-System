@@ -1,4 +1,5 @@
 import { monthStartYmd, todayYmd } from '@/lib/date'
+import { SalesTrend } from './SalesTrend'
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -83,6 +84,8 @@ export function ShopDashboardPage() {
           </button>
         </div>
       </div>
+
+      {data.trend && <SalesTrend bucket={data.trend.bucket} points={data.trend.points} />}
 
       {/* Orders To Act On */}
       <div>

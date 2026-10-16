@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { apiError } from '@/lib/apiError'
 import { useQuery } from '@tanstack/react-query'
 import { getPaymentMethods } from '@/api/settings'
 import { recordPayment } from '@/api/orders'
@@ -66,8 +67,8 @@ export function RecordPaymentDialog({
       toast.show('Payment recorded successfully.', 'success')
       onSuccess()
       onClose()
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to record payment.')
+    } catch (err) {
+      setError(apiError(err).message || 'Failed to record payment.')
     } finally {
       setIsSubmitting(false)
     }

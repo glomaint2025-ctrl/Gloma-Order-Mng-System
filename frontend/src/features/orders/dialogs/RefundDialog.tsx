@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { apiError } from '@/lib/apiError'
 import { refundOrder } from '@/api/orders'
 import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
@@ -28,8 +29,8 @@ export function RefundDialog({ isOpen, onClose, order, shopId, onSuccess }: Refu
       toast.show('Refund processed. Ledger entry created.', 'info')
       onSuccess()
       onClose()
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to refund order.')
+    } catch (err) {
+      setError(apiError(err).message || 'Failed to refund order.')
     } finally {
       setIsSubmitting(false)
     }

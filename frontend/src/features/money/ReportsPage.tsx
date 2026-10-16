@@ -1,4 +1,5 @@
 import { monthStartYmd, todayYmd } from '@/lib/date'
+import { ExportButton } from '@/components/ui/ExportButton'
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -64,6 +65,7 @@ export function ReportsPage() {
           >
             <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
           </button>
+          <ExportButton url={`/shops/${parsedShopId}/reports/sales/export`} params={{ from, to }} />
         </div>
       </div>
 

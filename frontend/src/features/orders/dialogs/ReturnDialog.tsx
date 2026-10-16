@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { apiError } from '@/lib/apiError'
 import { returnOrder } from '@/api/orders'
 import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
@@ -51,8 +52,8 @@ export function ReturnDialog({ isOpen, onClose, order, shopId, onSuccess }: Retu
       toast.show('Order marked as Returned. Good items returned to stock.', 'warning')
       onSuccess()
       onClose()
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to process return.')
+    } catch (err) {
+      setError(apiError(err).message || 'Failed to process return.')
     } finally {
       setIsSubmitting(false)
     }

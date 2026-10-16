@@ -1,62 +1,66 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { getMe, logout as apiLogout } from '@/api/auth'
-import type { MeData, ShopSummary } from '@/api/types'
 import { getMeta } from '@/api/meta'
-import type { MetaData } from '@/api/types'
+import type { MeData, MetaData } from '@/api/types'
+import { AuthContext } from './useAuth'
 
-interface AuthContextType {
-  me: MeData | null
-  meta: MetaData | null
-  isLoading: boolean
-  currentShop: ShopSummary | null
-  setCurrentShopId: (shopId: number) => void
-  refreshMe: () => Promise<void>
-  logout: () => Promise<void>
+const SHOP_KEY = 'gloma_current_shop_id'
+
+function readSavedShopId(): number | null {
+  try {
+    const saved = localStorage.getItem(SHOP_KEY)
+    return saved ? parseInt(saved, 10) : null
+  } catch {
+    return null
+  }
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+function saveShopId(id: number | null): void {
+  try {
+    if (id === null) localStorage.removeItem(SHOP_KEY)
+    else localStorage.setItem(SHOP_KEY, String(id))
+  } catch {
+    // storage unavailable (private mode): the shop choice just isn't remembered
+  }
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [me, setMe] = useState<MeData | null>(null)
   const [meta, setMeta] = useState<MetaData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [currentShopId, setCurrentShopIdState] = useState<number | null>(() => {
-    const saved = localStorage.getItem('gloma_current_shop_id')
-    return saved ? parseInt(saved, 10) : null
-  })
+  const [currentShopId, setCurrentShopIdState] = useState<number | null>(readSavedShopId)
+  // Read inside loadAuthAndMeta without making it depend on (and re-run for) every shop switch.
+  const currentShopIdRef = useRef(currentShopId)
 
-  const loadAuthAndMeta = async () => {
+  const setCurrentShopId = useCallback((id: number) => {
+    currentShopIdRef.current = id
+    setCurrentShopIdState(id)
+    saveShopId(id)
+  }, [])
+
+  const loadAuthAndMeta = useCallback(async () => {
     try {
-      const [meData, metaData] = await Promise.all([
-        getMe().catch(() => null),
-        getMeta().catch(() => null),
-      ])
+      const [meData, metaData] = await Promise.all([getMe().catch(() => null), getMeta().catch(() => null)])
 
       setMe(meData)
       setMeta(metaData)
 
       if (meData?.shops && meData.shops.length > 0) {
-        // If currentShopId is invalid or not in user's shops, pick the first can_open shop
-        const exists = meData.shops.some((s) => s.id === currentShopId)
-        if (!exists || !currentShopId) {
+        // If the saved shop is missing or no longer ours, pick the first shop that can be opened.
+        const savedId = currentShopIdRef.current
+        if (!savedId || !meData.shops.some((s) => s.id === savedId)) {
           const firstOpen = meData.shops.find((s) => s.can_open) || meData.shops[0]
-          setCurrentShopIdState(firstOpen.id)
-          localStorage.setItem('gloma_current_shop_id', String(firstOpen.id))
+          setCurrentShopId(firstOpen.id)
         }
       }
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [setCurrentShopId])
 
   useEffect(() => {
     loadAuthAndMeta()
-  }, [])
-
-  const setCurrentShopId = (id: number) => {
-    setCurrentShopIdState(id)
-    localStorage.setItem('gloma_current_shop_id', String(id))
-  }
+  }, [loadAuthAndMeta])
 
   const logout = async () => {
     try {
@@ -65,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // ignore logout network errors
     } finally {
       setMe(null)
-      localStorage.removeItem('gloma_current_shop_id')
+      saveShopId(null)
       window.location.href = '/login'
     }
   }
@@ -87,12 +91,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       {children}
     </AuthContext.Provider>
   )
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
 }

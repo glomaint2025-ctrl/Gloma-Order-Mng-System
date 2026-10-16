@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { ProductThumb, ProductImageField } from './ProductImage'
+import { apiError } from '@/lib/apiError'
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getProducts, createProduct, updateProduct } from '@/api/products'
-import { useAuth } from '@/app/authContext'
+import { useAuth } from '@/app/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
@@ -98,8 +100,8 @@ export function ProductsPage() {
       }
       setIsDialogOpen(false)
       refetch()
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to save product.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to save product.', 'danger')
     } finally {
       setIsSubmitting(false)
     }
@@ -194,13 +196,18 @@ export function ProductsPage() {
               {products.map((product) => (
                 <tr key={product.id} className="hover:bg-gray-50/50">
                   <td className="px-4 py-3 text-gray-900">
-                    <div className="font-semibold">{product.name}</div>
-                    <div className="text-[11px] text-gray-400 font-mono">SKU: {product.sku}</div>
-                    {product.description && (
-                      <div className="text-[11px] text-gray-500 mt-0.5 truncate max-w-xs">
-                        {product.description}
+                    <div className="flex items-center gap-3">
+                      <ProductThumb product={product} />
+                      <div className="min-w-0">
+                        <div className="font-semibold">{product.name}</div>
+                        <div className="text-[11px] text-gray-400 font-mono">SKU: {product.sku}</div>
+                        {product.description && (
+                          <div className="text-[11px] text-gray-500 mt-0.5 truncate max-w-xs">
+                            {product.description}
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </td>
 
                   <td className="px-4 py-3 text-right font-bold text-gray-900 font-mono">
@@ -301,6 +308,19 @@ export function ProductsPage() {
               onChange={(e) => setPrice(e.target.value)}
               required
             />
+
+            {editingProduct ? (
+              <ProductImageField
+                shopId={parsedShopId}
+                product={editingProduct}
+                onChange={(updated) => {
+                  setEditingProduct(updated)
+                  refetch()
+                }}
+              />
+            ) : (
+              <p className="text-[11px] text-gray-500">You can add a photo after the product is created.</p>
+            )}
 
             {editingProduct && (
               <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">

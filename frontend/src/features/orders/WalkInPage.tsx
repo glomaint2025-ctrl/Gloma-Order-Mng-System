@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
+import { apiError } from '@/lib/apiError'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { useForm, useFieldArray } from 'react-hook-form'
+import { useForm, useFieldArray, useWatch } from 'react-hook-form'
 import { createOrder } from '@/api/orders'
 import { getProducts } from '@/api/products'
 import { getPaymentMethods } from '@/api/settings'
@@ -48,7 +49,7 @@ export function WalkInPage() {
     enabled: parsedShopId > 0,
   })
 
-  const { register, control, handleSubmit, watch, setValue } = useForm<WalkInFormValues>({
+  const { register, control, handleSubmit, setValue } = useForm<WalkInFormValues>({
     defaultValues: {
       payment_method_id: 0,
       customer_name: '',
@@ -63,9 +64,9 @@ export function WalkInPage() {
     name: 'items',
   })
 
-  const watchedItems = watch('items')
-  const watchedDiscount = watch('discount')
-  const watchedPaymentMethodId = watch('payment_method_id')
+  const watchedItems = useWatch({ control, name: 'items' })
+  const watchedDiscount = useWatch({ control, name: 'discount' })
+  const watchedPaymentMethodId = useWatch({ control, name: 'payment_method_id' })
 
   useEffect(() => {
     if (paymentMethods && paymentMethods.length > 0 && !watchedPaymentMethodId) {
@@ -120,9 +121,9 @@ export function WalkInPage() {
       const order = await createOrder(parsedShopId, payload)
       toast.show(`Walk-in sale ${order.number} completed!`, 'success')
       navigate(`/shops/${parsedShopId}/orders/${order.id}`)
-    } catch (err: any) {
-      if (err.response?.status === 409 && err.response?.data?.code === 'insufficient_stock') {
-        setStockError(err.response?.data?.message || 'Insufficient stock for this sale.')
+    } catch (err) {
+      if (apiError(err).status === 409 && apiError(err).code === 'insufficient_stock') {
+        setStockError(apiError(err).message || 'Insufficient stock for this sale.')
       }
     } finally {
       setIsSubmitting(false)

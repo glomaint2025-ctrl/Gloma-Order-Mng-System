@@ -1,40 +1,18 @@
+import type React from 'react'
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { AppShell } from './layout/AppShell'
-import { useAuth } from './authContext'
+import { useAuth } from '@/app/useAuth'
 
-// Feature Pages
 import { LoginPage } from '@/features/auth/LoginPage'
-import { ShopPickerPage } from '@/features/shops/ShopPickerPage'
-import { ShopDashboardPage } from '@/features/dashboard/ShopDashboardPage'
 
-// Orders
-import { OrdersListPage } from '@/features/orders/OrdersListPage'
-import { OrderFormPage } from '@/features/orders/OrderFormPage'
-import { WalkInPage } from '@/features/orders/WalkInPage'
-import { OrderDetailPage } from '@/features/orders/OrderDetailPage'
 
-// Products & Inventory
-import { ProductsPage } from '@/features/products/ProductsPage'
-import { StockPage } from '@/features/stock/StockPage'
-import { PurchasesPage } from '@/features/purchases/PurchasesPage'
 
-// Customers & Money
-import { CustomersPage } from '@/features/customers/CustomersPage'
-import { CustomerDetailPage } from '@/features/customers/CustomerDetailPage'
-import { LedgerPage } from '@/features/money/LedgerPage'
-import { ReportsPage } from '@/features/money/ReportsPage'
-import { SettingsPage } from '@/features/settings/SettingsPage'
 
-// Admin Area
-import { AdminDashboardPage } from '@/features/admin/AdminDashboardPage'
-import { ShopsAdminPage } from '@/features/admin/ShopsAdminPage'
-import { ShopFormPage } from '@/features/admin/ShopFormPage'
-import { UsersAdminPage } from '@/features/admin/UsersAdminPage'
-import { CouriersAdminPage } from '@/features/admin/CouriersAdminPage'
-import { GlomaCouriersPage } from '@/features/admin/GlomaCouriersPage'
-import { GlobalTemplatesPage } from '@/features/admin/GlobalTemplatesPage'
-import { SmsUsagePage } from '@/features/admin/SmsUsagePage'
-import { AuditLogPage } from '@/features/admin/AuditLogPage'
+
+/** Code-split each page: its JS loads the first time the route is opened. */
+function page<M extends Record<string, unknown>>(load: () => Promise<M>, name: keyof M & string) {
+  return async () => ({ Component: (await load())[name] as React.ComponentType })
+}
 
 function RootRedirect() {
   const { me, isLoading } = useAuth()
@@ -69,10 +47,18 @@ function NotFoundPage() {
   )
 }
 
-export const router = createBrowserRouter([
+const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+  },
+  {
+    path: '/forgot-password',
+    lazy: page(() => import('@/features/auth/PasswordResetPages'), 'ForgotPasswordPage'),
+  },
+  {
+    path: '/reset-password',
+    lazy: page(() => import('@/features/auth/PasswordResetPages'), 'ResetPasswordPage'),
   },
   {
     path: '/',
@@ -84,64 +70,64 @@ export const router = createBrowserRouter([
       },
       {
         path: 'shops',
-        element: <ShopPickerPage />,
+        lazy: page(() => import('@/features/shops/ShopPickerPage'), 'ShopPickerPage'),
       },
       // Inside a shop
       {
         path: 'shops/:shopId/dashboard',
-        element: <ShopDashboardPage />,
+        lazy: page(() => import('@/features/dashboard/ShopDashboardPage'), 'ShopDashboardPage'),
       },
       {
         path: 'shops/:shopId/orders',
-        element: <OrdersListPage />,
+        lazy: page(() => import('@/features/orders/OrdersListPage'), 'OrdersListPage'),
       },
       {
         path: 'shops/:shopId/orders/new',
-        element: <OrderFormPage />,
+        lazy: page(() => import('@/features/orders/OrderFormPage'), 'OrderFormPage'),
       },
       {
         path: 'shops/:shopId/orders/walk-in',
-        element: <WalkInPage />,
+        lazy: page(() => import('@/features/orders/WalkInPage'), 'WalkInPage'),
       },
       {
         path: 'shops/:shopId/orders/:orderId',
-        element: <OrderDetailPage />,
+        lazy: page(() => import('@/features/orders/OrderDetailPage'), 'OrderDetailPage'),
       },
       {
         path: 'shops/:shopId/orders/:orderId/edit',
-        element: <OrderFormPage />,
+        lazy: page(() => import('@/features/orders/OrderFormPage'), 'OrderFormPage'),
       },
       {
         path: 'shops/:shopId/products',
-        element: <ProductsPage />,
+        lazy: page(() => import('@/features/products/ProductsPage'), 'ProductsPage'),
       },
       {
         path: 'shops/:shopId/stock',
-        element: <StockPage />,
+        lazy: page(() => import('@/features/stock/StockPage'), 'StockPage'),
       },
       {
         path: 'shops/:shopId/purchases',
-        element: <PurchasesPage />,
+        lazy: page(() => import('@/features/purchases/PurchasesPage'), 'PurchasesPage'),
       },
       {
         path: 'shops/:shopId/customers',
-        element: <CustomersPage />,
+        lazy: page(() => import('@/features/customers/CustomersPage'), 'CustomersPage'),
       },
       {
         path: 'shops/:shopId/customers/:customerId',
-        element: <CustomerDetailPage />,
+        lazy: page(() => import('@/features/customers/CustomerDetailPage'), 'CustomerDetailPage'),
       },
       {
         path: 'shops/:shopId/money',
-        element: <LedgerPage />,
+        lazy: page(() => import('@/features/money/LedgerPage'), 'LedgerPage'),
       },
       {
         path: 'shops/:shopId/reports',
-        element: <ReportsPage />,
+        lazy: page(() => import('@/features/money/ReportsPage'), 'ReportsPage'),
       },
       {
         path: 'shops/:shopId/settings',
-        element: <SettingsPage />,
+        lazy: page(() => import('@/features/settings/SettingsPage'), 'SettingsPage'),
       },
       // Admin Area
       {
@@ -150,43 +136,43 @@ export const router = createBrowserRouter([
       },
       {
         path: 'admin/dashboard',
-        element: <AdminDashboardPage />,
+        lazy: page(() => import('@/features/admin/AdminDashboardPage'), 'AdminDashboardPage'),
       },
       {
         path: 'admin/shops',
-        element: <ShopsAdminPage />,
+        lazy: page(() => import('@/features/admin/ShopsAdminPage'), 'ShopsAdminPage'),
       },
       {
         path: 'admin/shops/new',
-        element: <ShopFormPage />,
+        lazy: page(() => import('@/features/admin/ShopFormPage'), 'ShopFormPage'),
       },
       {
         path: 'admin/shops/:id',
-        element: <ShopFormPage />,
+        lazy: page(() => import('@/features/admin/ShopFormPage'), 'ShopFormPage'),
       },
       {
         path: 'admin/users',
-        element: <UsersAdminPage />,
+        lazy: page(() => import('@/features/admin/UsersAdminPage'), 'UsersAdminPage'),
       },
       {
         path: 'admin/couriers',
-        element: <CouriersAdminPage />,
+        lazy: page(() => import('@/features/admin/CouriersAdminPage'), 'CouriersAdminPage'),
       },
       {
         path: 'admin/courier-accounts',
-        element: <GlomaCouriersPage />,
+        lazy: page(() => import('@/features/admin/GlomaCouriersPage'), 'GlomaCouriersPage'),
       },
       {
         path: 'admin/templates',
-        element: <GlobalTemplatesPage />,
+        lazy: page(() => import('@/features/admin/GlobalTemplatesPage'), 'GlobalTemplatesPage'),
       },
       {
         path: 'admin/sms-usage',
-        element: <SmsUsagePage />,
+        lazy: page(() => import('@/features/admin/SmsUsagePage'), 'SmsUsagePage'),
       },
       {
         path: 'admin/audit',
-        element: <AuditLogPage />,
+        lazy: page(() => import('@/features/admin/AuditLogPage'), 'AuditLogPage'),
       },
     ],
   },

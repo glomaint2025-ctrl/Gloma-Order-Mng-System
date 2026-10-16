@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { apiError } from '@/lib/apiError'
+import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { login } from '@/api/auth'
-import { useAuth } from '@/app/authContext'
+import { useAuth } from '@/app/useAuth'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { LogIn, AlertCircle } from 'lucide-react'
@@ -44,13 +45,13 @@ export function LoginPage() {
       } else {
         navigate('/shops')
       }
-    } catch (err: any) {
-      if (err.response?.status === 429) {
-        setServerError(err.response?.data?.message || 'Too many attempts. Please try again later.')
-      } else if (err.response?.status === 422) {
-        setServerError(err.response?.data?.errors?.email?.[0] || err.response?.data?.message || 'Wrong email or password.')
+    } catch (err) {
+      if (apiError(err).status === 429) {
+        setServerError(apiError(err).message || 'Too many attempts. Please try again later.')
+      } else if (apiError(err).status === 422) {
+        setServerError(apiError(err).errors?.email?.[0] || apiError(err).message || 'Wrong email or password.')
       } else {
-        setServerError(err.response?.data?.message || 'Sign in failed. Check your connection.')
+        setServerError(apiError(err).message || 'Sign in failed. Check your connection.')
       }
     } finally {
       setIsSubmitting(false)
@@ -100,6 +101,12 @@ export function LoginPage() {
               error={errors.password?.message}
               {...register('password')}
             />
+
+            <div className="text-right -mt-2">
+              <Link to="/forgot-password" className="text-xs font-medium text-indigo-600 hover:text-indigo-700">
+                Forgot password?
+              </Link>
+            </div>
 
             <div className="pt-2">
               <Button

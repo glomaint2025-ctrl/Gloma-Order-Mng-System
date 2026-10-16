@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { apiError } from '@/lib/apiError'
 import { useQuery } from '@tanstack/react-query'
 import {
   getGlomaCourierAccounts,
@@ -85,8 +86,8 @@ export function GlomaCouriersPage() {
       }
       setIsDialogOpen(false)
       refetch()
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to save account.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to save account.', 'danger')
     } finally {
       setIsSubmitting(false)
     }

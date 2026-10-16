@@ -3,7 +3,7 @@ import { Outlet, useLocation, Navigate } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { AdminSidebar } from './AdminSidebar'
 import { Topbar } from './Topbar'
-import { useAuth } from '../authContext'
+import { useAuth } from '@/app/useAuth'
 import { Spinner } from '@/components/ui/Spinner'
 import { AlertCircle } from 'lucide-react'
 

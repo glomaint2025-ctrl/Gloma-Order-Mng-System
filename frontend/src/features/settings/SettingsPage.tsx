@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { apiError } from '@/lib/apiError'
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -117,8 +118,8 @@ export function SettingsPage() {
       }
       setIsPaymentDialogOpen(false)
       refetchPayments()
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to save payment method.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to save payment method.', 'danger')
     }
   }
 
@@ -148,8 +149,8 @@ export function SettingsPage() {
       }
       setIsCourierDialogOpen(false)
       refetchCouriers()
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to save courier account.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to save courier account.', 'danger')
     }
   }
 
@@ -168,8 +169,8 @@ export function SettingsPage() {
       toast.show('Template override saved for this shop.', 'success')
       setEditingTemplateRow(null)
       refetchTemplates()
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to save template.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to save template.', 'danger')
     }
   }
 
@@ -181,8 +182,8 @@ export function SettingsPage() {
       })
       toast.show('Template reset to default.', 'info')
       refetchTemplates()
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to reset template.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to reset template.', 'danger')
     }
   }
 
@@ -300,7 +301,7 @@ export function SettingsPage() {
                       onClick={() => {
                         setEditingPayment(m)
                         setPaymentName(m.name)
-                        setPaymentKind(m.kind.value as any)
+                        setPaymentKind(m.kind.value as 'cod' | 'prepaid')
                         setPaymentRequiresSlip(m.requires_slip)
                         setPaymentIsActive(m.is_active)
                         setIsPaymentDialogOpen(true)
@@ -583,7 +584,7 @@ export function SettingsPage() {
             <Select
               label="Type"
               value={paymentKind}
-              onChange={(e) => setPaymentKind(e.target.value as any)}
+              onChange={(e) => setPaymentKind(e.target.value as 'cod' | 'prepaid')}
               required
             >
               <option value="cod">Cash on Delivery (COD)</option>

@@ -41,3 +41,11 @@ export async function updateCustomer(
   const res = await apiClient.patch<{ data: Customer }>(`/shops/${shopId}/customers/${customerId}`, payload)
   return res.data.data
 }
+
+export async function eraseCustomer(shopId: number, customerId: number, reason: string): Promise<{ message: string }> {
+  const res = await apiClient.post<{ message: string }>(`/shops/${shopId}/customers/${customerId}/erase`, {
+    confirm: 'ERASE',
+    reason,
+  })
+  return res.data
+}

@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react'
+import { apiError } from '@/lib/apiError'
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getPurchases, getPurchase, createPurchase } from '@/api/purchases'
 import { getProducts } from '@/api/products'
-import { useAuth } from '@/app/authContext'
+import { useAuth } from '@/app/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Dialog } from '@/components/ui/Dialog'
@@ -119,8 +120,8 @@ export function PurchasesPage() {
       toast.show('Stock purchase recorded and stock levels updated.', 'success')
       setIsCreateOpen(false)
       refetch()
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to record purchase.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to record purchase.', 'danger')
     } finally {
       setIsSubmitting(false)
     }

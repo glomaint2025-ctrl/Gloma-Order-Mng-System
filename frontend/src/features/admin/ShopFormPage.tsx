@@ -1,5 +1,6 @@
 import { todayYmd } from '@/lib/date'
-import { useState, useEffect } from 'react'
+import { apiError } from '@/lib/apiError'
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -10,7 +11,7 @@ import {
   removeAdminShopOwner,
   getAdminUsers,
 } from '@/api/admin'
-import { useAuth } from '@/app/authContext'
+import { useAuth } from '@/app/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -63,19 +64,20 @@ export function ShopFormPage() {
     queryFn: () => getAdminUsers({ role: 'shop_owner', page: 1 }),
   })
 
-  useEffect(() => {
-    if (shop) {
-      setName(shop.name)
-      setCode(shop.code)
-      setStockMode(shop.stock_mode.value as any)
-      setContractRef(shop.contract_ref || '')
-      setContractStartedOn(shop.contract_started_on || '')
-      setPhone(shop.phone || '')
-      setEmail(shop.email || '')
-      setAddress(shop.address || '')
-      setNotes(shop.notes || '')
-    }
-  }, [shop])
+  // Copy the loaded shop into the form once per shop (React's "adjust state while rendering" pattern).
+  const [loadedShopId, setLoadedShopId] = useState<number | null>(null)
+  if (shop && shop.id !== loadedShopId) {
+    setLoadedShopId(shop.id)
+    setName(shop.name)
+    setCode(shop.code)
+    setStockMode(shop.stock_mode.value as 'single' | 'by_location')
+    setContractRef(shop.contract_ref || '')
+    setContractStartedOn(shop.contract_started_on || '')
+    setPhone(shop.phone || '')
+    setEmail(shop.email || '')
+    setAddress(shop.address || '')
+    setNotes(shop.notes || '')
+  }
 
   const handleSaveShop = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -130,8 +132,8 @@ export function ShopFormPage() {
         await refreshMe()
         navigate('/admin/shops')
       }
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to save shop.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to save shop.', 'danger')
     } finally {
       setIsSubmitting(false)
     }
@@ -155,8 +157,8 @@ export function ShopFormPage() {
       toast.show('Owner assigned to shop.', 'success')
       setIsAddOwnerOpen(false)
       refetch()
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to assign owner.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to assign owner.', 'danger')
     } finally {
       setIsSubmitting(false)
     }
@@ -168,8 +170,8 @@ export function ShopFormPage() {
       await removeAdminShopOwner(shopId, userId)
       toast.show('Owner removed from shop.', 'info')
       refetch()
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to remove owner.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to remove owner.', 'danger')
     }
   }
 
@@ -232,7 +234,7 @@ export function ShopFormPage() {
               <Select
                 label="Stock Mode"
                 value={stockMode}
-                onChange={(e) => setStockMode(e.target.value as any)}
+                onChange={(e) => setStockMode(e.target.value as 'single' | 'by_location')}
                 required
               >
                 <option value="single">Single (Shared Stock Pool)</option>

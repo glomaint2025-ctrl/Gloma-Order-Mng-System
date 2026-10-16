@@ -1,9 +1,10 @@
 import { useState } from 'react'
+import { apiError } from '@/lib/apiError'
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getProducts } from '@/api/products'
 import { getStockMovements, adjustStock, transferStock, switchStockMode } from '@/api/stock'
-import { useAuth } from '@/app/authContext'
+import { useAuth } from '@/app/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -123,8 +124,8 @@ export function StockPage() {
       setIsAdjustOpen(false)
       refetchProducts()
       if (activeTab === 'movements') refetchMovements()
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to adjust stock.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to adjust stock.', 'danger')
     } finally {
       setIsSubmitting(false)
     }
@@ -155,8 +156,8 @@ export function StockPage() {
       setIsTransferOpen(false)
       refetchProducts()
       if (activeTab === 'movements') refetchMovements()
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to transfer stock.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to transfer stock.', 'danger')
     } finally {
       setIsSubmitting(false)
     }
@@ -199,8 +200,8 @@ export function StockPage() {
       setIsModeOpen(false)
       await refreshMe()
       refetchProducts()
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to switch stock mode.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to switch stock mode.', 'danger')
     } finally {
       setIsSubmitting(false)
     }
@@ -515,7 +516,7 @@ export function StockPage() {
             <Select
               label="Adjustment Type"
               value={adjustType}
-              onChange={(e) => setAdjustType(e.target.value as any)}
+              onChange={(e) => setAdjustType(e.target.value as 'correction' | 'damage' | 'handover')}
               required
             >
               <option value="correction">Correction (Count variance ±)</option>
@@ -593,7 +594,7 @@ export function StockPage() {
               <Select
                 label="Transfer From"
                 value={transferFrom}
-                onChange={(e) => setTransferFrom(e.target.value as any)}
+                onChange={(e) => setTransferFrom(e.target.value as 'gloma' | 'shop')}
                 required
               >
                 <option value="gloma">Gloma Warehouse</option>
@@ -603,7 +604,7 @@ export function StockPage() {
               <Select
                 label="Transfer To"
                 value={transferTo}
-                onChange={(e) => setTransferTo(e.target.value as any)}
+                onChange={(e) => setTransferTo(e.target.value as 'gloma' | 'shop')}
                 required
               >
                 <option value="shop">Shop Outlet</option>
@@ -657,7 +658,7 @@ export function StockPage() {
             <Select
               label="New Stock Mode"
               value={targetStockMode}
-              onChange={(e) => setTargetStockMode(e.target.value as any)}
+              onChange={(e) => setTargetStockMode(e.target.value as 'single' | 'by_location')}
               required
             >
               <option value="single">Single (Shared stock pool)</option>

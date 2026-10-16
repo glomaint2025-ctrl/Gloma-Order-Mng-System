@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { apiError } from '@/lib/apiError'
 import { useQuery } from '@tanstack/react-query'
 import { getCourierAccounts } from '@/api/settings'
 import { dispatchOrder } from '@/api/orders'
@@ -36,14 +37,13 @@ export function DispatchDialog({ isOpen, onClose, order, shopId, onSuccess }: Di
     enabled: isOpen,
   })
 
-  useEffect(() => {
-    if (accounts && accounts.length > 0 && !courierAccountId) {
-      setCourierAccountId(accounts[0].id)
-      if (accounts[0].default_charge) {
-        setCourierCharge(accounts[0].default_charge)
-      }
+  // Preselect the first account and its default charge once the list arrives (adjust-state-while-rendering).
+  if (accounts && accounts.length > 0 && !courierAccountId) {
+    setCourierAccountId(accounts[0].id)
+    if (accounts[0].default_charge) {
+      setCourierCharge(accounts[0].default_charge)
     }
-  }, [accounts, courierAccountId])
+  }
 
   const handleAccountChange = (id: number) => {
     setCourierAccountId(id)
@@ -75,8 +75,8 @@ export function DispatchDialog({ isOpen, onClose, order, shopId, onSuccess }: Di
       toast.show('Order handed to courier and tracking link generated.', 'success')
       onSuccess()
       onClose()
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to dispatch order.')
+    } catch (err) {
+      setError(apiError(err).message || 'Failed to dispatch order.')
     } finally {
       setIsSubmitting(false)
     }

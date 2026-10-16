@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
+import { apiError } from '@/lib/apiError'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { useForm, useFieldArray } from 'react-hook-form'
+import { useForm, useFieldArray, useWatch } from 'react-hook-form'
 import { getOrder, createOrder, updateOrder } from '@/api/orders'
 import { getProducts } from '@/api/products'
 import { lookupCustomer } from '@/api/customers'
@@ -44,11 +45,11 @@ export function OrderFormPage() {
   const parsedOrderId = parseInt(orderId || '0', 10)
   const navigate = useNavigate()
 
-  const [customerWarnings, setCustomerWarnings] = useState<OrderWarning[]>([])
+  // null until a phone lookup runs; until then an edited order shows its own warnings.
+  const [lookupWarnings, setLookupWarnings] = useState<OrderWarning[] | null>(null)
   const [phoneError, setPhoneError] = useState<string | null>(null)
   const [stockError, setStockError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [orderVersion, setOrderVersion] = useState<number>(1)
 
   // Fetch products for item selector
   const { data: productsData } = useQuery({
@@ -75,7 +76,6 @@ export function OrderFormPage() {
     register,
     control,
     handleSubmit,
-    watch,
     setValue,
     formState: { errors },
   } = useForm<FormValues>({
@@ -99,11 +99,11 @@ export function OrderFormPage() {
     name: 'items',
   })
 
-  const watchedItems = watch('items')
-  const watchedDeliveryFee = watch('delivery_fee')
-  const watchedDiscount = watch('discount')
-  const watchedPhone = watch('customer_phone')
-  const watchedPaymentMethodId = watch('payment_method_id')
+  const watchedItems = useWatch({ control, name: 'items' })
+  const watchedDeliveryFee = useWatch({ control, name: 'delivery_fee' })
+  const watchedDiscount = useWatch({ control, name: 'discount' })
+  const watchedPhone = useWatch({ control, name: 'customer_phone' })
+  const watchedPaymentMethodId = useWatch({ control, name: 'payment_method_id' })
 
   // Set default payment method when loaded
   useEffect(() => {
@@ -116,7 +116,6 @@ export function OrderFormPage() {
   // Populate form if editing
   useEffect(() => {
     if (existingOrder) {
-      setOrderVersion(existingOrder.version)
       setValue('channel', existingOrder.channel.value as 'delivery' | 'walk_in')
       setValue('payment_method_id', existingOrder.payment_method?.id || 0)
       setValue('customer_phone', existingOrder.customer.phone_local || existingOrder.customer.phone || '')
@@ -137,17 +136,12 @@ export function OrderFormPage() {
           }))
         )
       }
-
-      if (existingOrder.warnings) {
-        setCustomerWarnings(existingOrder.warnings)
-      }
     }
   }, [existingOrder, setValue])
 
   // Debounced phone lookup
   useEffect(() => {
     if (!watchedPhone || watchedPhone.trim().length < 9) {
-      setPhoneError(null)
       return
     }
 
@@ -155,15 +149,15 @@ export function OrderFormPage() {
       try {
         setPhoneError(null)
         const res = await lookupCustomer(parsedShopId, watchedPhone)
-        setCustomerWarnings(res.warnings || [])
+        setLookupWarnings(res.warnings || [])
         if (res.customer) {
           if (res.customer.name) setValue('customer_name', res.customer.name)
           if (res.customer.email) setValue('customer_email', res.customer.email)
           if (res.customer.address) setValue('customer_address', res.customer.address)
           if (res.customer.city) setValue('customer_city', res.customer.city)
         }
-      } catch (err: any) {
-        if (err.response?.status === 422) {
+      } catch (err) {
+        if (apiError(err).status === 422) {
           setPhoneError('Please enter a valid Sri Lankan mobile number (e.g. 0771234567).')
         }
       }
@@ -172,8 +166,11 @@ export function OrderFormPage() {
     return () => clearTimeout(handler)
   }, [watchedPhone, parsedShopId, setValue])
 
-  // Live total preview in integer cents. Computed every render on purpose: watch('items') returns the
-  // same array reference when a nested field changes, so a useMemo keyed on it would go stale.
+  const customerWarnings = lookupWarnings ?? existingOrder?.warnings ?? []
+  const phoneTooShort = !watchedPhone || watchedPhone.trim().length < 9
+
+  // Live total preview in integer cents, computed every render (cheap). Note: never wrap this in a useMemo
+  // keyed on the items array: react-hook-form can keep the same array reference when a nested field changes.
   let subtotalCents = 0
   watchedItems.forEach((item) => {
     subtotalCents += toCents(item.unit_price || '0') * (Number(item.qty) || 1)
@@ -217,7 +214,7 @@ export function OrderFormPage() {
       delivery_fee: values.delivery_fee,
       discount: values.discount,
       note: values.note || undefined,
-      version: isEditing ? orderVersion : undefined,
+      version: isEditing ? existingOrder?.version : undefined,
     }
 
     try {
@@ -230,10 +227,10 @@ export function OrderFormPage() {
         toast.show(`Order ${created.number} created successfully.`, 'success')
         navigate(`/shops/${parsedShopId}/orders/${created.id}`)
       }
-    } catch (err: any) {
-      if (err.response?.status === 409 && err.response?.data?.code === 'insufficient_stock') {
-        setStockError(err.response?.data?.message || 'Insufficient stock for one or more items.')
-      } else if (err.response?.status === 409 && err.response?.data?.code === 'stale_version') {
+    } catch (err) {
+      if (apiError(err).status === 409 && apiError(err).code === 'insufficient_stock') {
+        setStockError(apiError(err).message || 'Insufficient stock for one or more items.')
+      } else if (apiError(err).status === 409 && apiError(err).code === 'stale_version') {
         toast.show('Order was modified by someone else. Reloading...', 'danger')
         navigate(`/shops/${parsedShopId}/orders/${parsedOrderId}`)
       }
@@ -302,7 +299,7 @@ export function OrderFormPage() {
               label="Phone number (Local or E.164)"
               placeholder="0771234567"
               required
-              error={phoneError || errors.customer_phone?.message}
+              error={(phoneTooShort ? null : phoneError) || errors.customer_phone?.message}
               helperText="Type phone to lookup existing customer details"
               {...register('customer_phone', { required: 'Phone is required' })}
             />

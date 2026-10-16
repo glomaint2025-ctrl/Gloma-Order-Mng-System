@@ -93,6 +93,7 @@ export interface Product {
   sku: string
   name: string
   description: string | null
+  image_url: string | null
   price: string
   avg_cost: string
   is_active: boolean
@@ -396,7 +397,16 @@ export interface LedgerSummary {
   }
 }
 
+export interface TrendPoint {
+  date: string
+  orders: number
+  gloma: string
+  shop: string
+  total: string
+}
+
 export interface DashboardData {
+  trend: { bucket: 'day' | 'month'; points: TrendPoint[] }
   period: {
     from: string
     to: string

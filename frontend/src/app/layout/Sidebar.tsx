@@ -12,7 +12,7 @@ import {
   Settings,
   ShieldAlert,
 } from 'lucide-react'
-import { useAuth } from '../authContext'
+import { useAuth } from '@/app/useAuth'
 import { hasPermission } from '@/lib/permissions'
 
 export interface SidebarProps {

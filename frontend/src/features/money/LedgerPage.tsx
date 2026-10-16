@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { ExportButton } from '@/components/ui/ExportButton'
+import { apiError } from '@/lib/apiError'
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getLedger, createLedgerEntry } from '@/api/finance'
-import { useAuth } from '@/app/authContext'
+import { useAuth } from '@/app/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -72,8 +74,8 @@ export function LedgerPage() {
       setAmount('')
       setDescription('')
       refetch()
-    } catch (err: any) {
-      toast.show(err.response?.data?.message || 'Failed to add ledger entry.', 'danger')
+    } catch (err) {
+      toast.show(apiError(err).message || 'Failed to add ledger entry.', 'danger')
     } finally {
       setIsSubmitting(false)
     }
@@ -90,16 +92,22 @@ export function LedgerPage() {
           </p>
         </div>
 
-        {canManageLedger && (
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setIsEntryDialogOpen(true)}
-            icon={<Plus className="w-3.5 h-3.5" />}
-          >
-            Add Manual Entry
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <ExportButton
+            url={`/shops/${parsedShopId}/ledger/export`}
+            params={{ party: partyFilter || undefined, type: typeFilter || undefined }}
+          />
+          {canManageLedger && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setIsEntryDialogOpen(true)}
+              icon={<Plus className="w-3.5 h-3.5" />}
+            >
+              Add Manual Entry
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Balances Card */}
@@ -253,7 +261,7 @@ export function LedgerPage() {
             <Select
               label="Transaction Type"
               value={entryType}
-              onChange={(e) => setEntryType(e.target.value as any)}
+              onChange={(e) => setEntryType(e.target.value as 'shop_payment' | 'gloma_fee' | 'payout' | 'adjustment')}
               required
             >
               <option value="shop_payment">Shop Payment (Money received from shop)</option>

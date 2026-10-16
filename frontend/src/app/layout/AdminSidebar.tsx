@@ -10,7 +10,7 @@ import {
   ShieldCheck,
   ArrowLeft,
 } from 'lucide-react'
-import { useAuth } from '../authContext'
+import { useAuth } from '@/app/useAuth'
 
 export interface AdminSidebarProps {
   onCloseMobile?: () => void

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { apiError } from '@/lib/apiError'
 import { useQuery } from '@tanstack/react-query'
 import { getAdminCouriers, updateAdminCourier } from '@/api/admin'
 import { Button } from '@/components/ui/Button'
@@ -47,8 +48,8 @@ export function CouriersAdminPage() {
       toast.show('Courier tracking pattern updated.', 'success')
       setEditingCourier(null)
       refetch()
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update courier.')
+    } catch (err) {
+      setError(apiError(err).message || 'Failed to update courier.')
     } finally {
       setIsSubmitting(false)
     }

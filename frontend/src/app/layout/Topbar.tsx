@@ -1,5 +1,5 @@
 import { Menu, LogOut, Shield } from 'lucide-react'
-import { useAuth } from '../authContext'
+import { useAuth } from '@/app/useAuth'
 import { ShopSwitcher } from './ShopSwitcher'
 import { Badge } from '@/components/ui/Badge'
 

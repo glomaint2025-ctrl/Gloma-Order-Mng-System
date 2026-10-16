@@ -30,3 +30,15 @@ export async function updateProduct(
   const res = await apiClient.patch<{ data: Product }>(`/shops/${shopId}/products/${productId}`, payload)
   return res.data.data
 }
+
+export async function uploadProductImage(shopId: number, productId: number, file: File): Promise<Product> {
+  const form = new FormData()
+  form.append('image', file)
+  const res = await apiClient.post<{ data: Product }>(`/shops/${shopId}/products/${productId}/image`, form)
+  return res.data.data
+}
+
+export async function deleteProductImage(shopId: number, productId: number): Promise<Product> {
+  const res = await apiClient.delete<{ data: Product }>(`/shops/${shopId}/products/${productId}/image`)
+  return res.data.data
+}
