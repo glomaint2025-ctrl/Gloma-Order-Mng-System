@@ -9,6 +9,7 @@ use App\Domain\Inventory\Enums\StockLocation;
 use App\Domain\Shops\Tenancy\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 /** @mixin Product */
 class ProductResource extends JsonResource
@@ -25,6 +26,7 @@ class ProductResource extends JsonResource
             'sku' => $this->sku,
             'name' => $this->name,
             'description' => $this->description,
+            'image_url' => $this->image_path ? Storage::disk('public')->url($this->image_path) : null,
             'price' => $this->price,
             'avg_cost' => $this->avg_cost,
             'is_active' => $this->is_active,

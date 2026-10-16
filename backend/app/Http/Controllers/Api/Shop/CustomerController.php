@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\Shop;
 
 use App\Domain\Audit\Services\AuditLogger;
 use App\Domain\Customers\Models\Customer;
+use App\Domain\Customers\Services\CustomerPrivacy;
 use App\Domain\Customers\Services\CustomerService;
 use App\Domain\Orders\Models\Order;
 use App\Domain\Shops\Models\Shop;
@@ -74,6 +75,33 @@ final class CustomerController extends Controller
                 Order::query()->where('customer_id', $customer->id)->with('customer:id,is_risky,returns_count')->withCount('items')->latest('id')->limit(20)->get()
             ),
         ]]);
+    }
+
+    /** PDPA access request: everything held about this customer, as a JSON download. Admin only. */
+    public function exportData(Shop $shop, Customer $customer, CustomerPrivacy $privacy, AuditLogger $audit): JsonResponse
+    {
+        $audit->log('customer.data_exported', $customer);
+
+        return response()->json($privacy->export($customer), 200, [
+            'Content-Disposition' => 'attachment; filename="customer-'.$customer->id.'-data.json"',
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    }
+
+    /** PDPA erasure request. Irreversible: body must include confirm: "ERASE" and a reason. Admin only. */
+    public function erase(Request $request, Shop $shop, Customer $customer, CustomerPrivacy $privacy, AuditLogger $audit): JsonResponse
+    {
+        $data = $request->validate([
+            'confirm' => ['required', 'in:ERASE'],
+            'reason' => ['required', 'string', 'max:255'],
+        ]);
+        if ($customer->anonymized_at !== null) {
+            throw new BusinessRuleException('already_erased', 'This customer was already erased.');
+        }
+
+        $orders = $privacy->erase($customer);
+        $audit->log('customer.erased', $customer, ['reason' => $data['reason'], 'orders_cleared' => $orders]);
+
+        return response()->json(['message' => "Customer erased. Personal details removed from {$orders} order(s); amounts kept for accounts."]);
     }
 
     public function update(Request $request, Shop $shop, Customer $customer, AuditLogger $audit): CustomerResource

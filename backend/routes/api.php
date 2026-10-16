@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Admin\ShopAdminController;
 use App\Http\Controllers\Api\Admin\UserAdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\MetaController;
+use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\Shop\CatalogController;
 use App\Http\Controllers\Api\Shop\CustomerController;
 use App\Http\Controllers\Api\Shop\DocumentController;
@@ -21,6 +22,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('health', [MetaController::class, 'health'])->name('health');
 Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:login')->name('auth.login');
+Route::post('auth/forgot-password', [PasswordResetController::class, 'forgot'])->middleware('throttle:login')->name('auth.forgot');
+Route::post('auth/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:login')->name('auth.reset');
 
 Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::get('auth/me', [AuthController::class, 'me'])->name('auth.me');
@@ -71,6 +74,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::middleware('can:'.Perm::STOCK_MANAGE)->group(function () {
             Route::post('products', [CatalogController::class, 'storeProduct'])->name('products.store');
             Route::patch('products/{product}', [CatalogController::class, 'updateProduct'])->name('products.update');
+            Route::post('products/{product}/image', [CatalogController::class, 'uploadImage'])->name('products.image');
+            Route::delete('products/{product}/image', [CatalogController::class, 'deleteImage'])->name('products.image.delete');
             Route::post('stock/adjustments', [CatalogController::class, 'adjust'])->name('stock.adjust');
             Route::post('stock/transfers', [CatalogController::class, 'transfer'])->name('stock.transfer');
             Route::post('stock/mode', [CatalogController::class, 'switchMode'])->name('stock.mode');
@@ -79,6 +84,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
         // Orders
         Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('orders/export', [OrderController::class, 'export'])->middleware('can:'.Perm::REPORTS_VIEW)->name('orders.export');
         Route::post('orders', [OrderController::class, 'store'])->middleware('can:'.Perm::ORDERS_PLACE)->name('orders.store');
         Route::post('orders/print', [DocumentController::class, 'bulk'])->name('orders.print');
         Route::get('orders/{order}', [OrderController::class, 'show'])->name('orders.show');
@@ -100,10 +106,14 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::get('customers/lookup', [CustomerController::class, 'lookup'])->name('customers.lookup');
         Route::get('customers/{customer}', [CustomerController::class, 'show'])->name('customers.show');
         Route::patch('customers/{customer}', [CustomerController::class, 'update'])->middleware('can:'.Perm::CUSTOMERS_MANAGE)->name('customers.update');
+        Route::get('customers/{customer}/export', [CustomerController::class, 'exportData'])->middleware('can:'.Perm::PRIVACY_MANAGE)->name('customers.export');
+        Route::post('customers/{customer}/erase', [CustomerController::class, 'erase'])->middleware('can:'.Perm::PRIVACY_MANAGE)->name('customers.erase');
 
         // Money & reports
         Route::get('reports/sales', [FinanceController::class, 'salesReport'])->middleware('can:'.Perm::REPORTS_VIEW)->name('reports.sales');
+        Route::get('reports/sales/export', [FinanceController::class, 'exportSalesReport'])->middleware('can:'.Perm::REPORTS_VIEW)->name('reports.sales.export');
         Route::get('ledger', [FinanceController::class, 'ledger'])->middleware('can:'.Perm::REPORTS_VIEW)->name('ledger.index');
+        Route::get('ledger/export', [FinanceController::class, 'exportLedger'])->middleware('can:'.Perm::REPORTS_VIEW)->name('ledger.export');
         Route::post('ledger', [FinanceController::class, 'storeLedger'])->middleware('can:'.Perm::LEDGER_MANAGE)->name('ledger.store');
         Route::get('messages', [FinanceController::class, 'messages'])->middleware('can:'.Perm::REPORTS_VIEW)->name('messages.index');
 

@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $sku
  * @property string $name
  * @property ?string $description
+ * @property ?string $image_path
  * @property string $price
  * @property string $avg_cost
  * @property bool $is_active
@@ -30,7 +31,7 @@ class Product extends Model
     /** @use HasFactory<ProductFactory> */
     use HasFactory;
 
-    protected $fillable = ['shop_id', 'sku', 'name', 'description', 'price', 'avg_cost', 'is_active'];
+    protected $fillable = ['shop_id', 'sku', 'name', 'description', 'image_path', 'price', 'avg_cost', 'is_active'];
 
     protected function casts(): array
     {

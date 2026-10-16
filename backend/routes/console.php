@@ -1,8 +1,8 @@
 <?php
 
 use App\Domain\Customers\Models\Customer;
+use App\Domain\Customers\Services\CustomerPrivacy;
 use App\Domain\Notifications\Contracts\SmsGateway;
-use App\Domain\Orders\Models\Order;
 use App\Domain\Users\Perm;
 use App\Models\User;
 use App\Support\Phone;
@@ -49,14 +49,7 @@ Artisan::command('portal:anonymize-customers {--dry-run}', function () {
     }
 
     foreach ($stale as $customer) {
-        $hash = 'anon-'.substr(hash('sha256', $customer->phone), 0, 12);
-        Order::withoutGlobalScopes()->where('customer_id', $customer->id)->update([
-            'customer_name' => 'Removed', 'customer_phone' => null, 'customer_email' => null, 'delivery_address' => null,
-        ]);
-        $customer->forceFill([
-            'name' => 'Removed', 'phone' => $hash, 'email' => null, 'address' => null, 'city' => null,
-            'risk_note' => null, 'anonymized_at' => now(),
-        ])->save();
+        app(CustomerPrivacy::class)->erase($customer);
     }
 
     return 0;

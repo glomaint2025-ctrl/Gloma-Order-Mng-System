@@ -20,7 +20,9 @@ use App\Http\Resources\OrderListResource;
 use App\Http\Resources\OrderNoteResource;
 use App\Http\Resources\OrderResource;
 use App\Models\User;
+use App\Support\CsvExport;
 use App\Support\Phone;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -34,6 +36,46 @@ final class OrderController extends Controller
     /** Filters: status, payment_status, seller, channel, search (number / name / phone), from, to, needs_action. */
     public function index(Request $request, Shop $shop): AnonymousResourceCollection
     {
+        $f = $request->validate(['per_page' => ['nullable', 'integer', 'min:5', 'max:100']]);
+
+        $orders = $this->filtered($request)
+            ->with('customer:id,is_risky,returns_count')
+            ->withCount('items')
+            ->latest('id')
+            ->paginate($f['per_page'] ?? 25);
+
+        return OrderListResource::collection($orders);
+    }
+
+    /** Same filters as the list, as a CSV for Excel (one row per order). */
+    public function export(Request $request, Shop $shop): StreamedResponse
+    {
+        // Explicit shop filter: rows stream after the tenant middleware has finished (see CsvExport).
+        $orders = $this->filtered($request)->where('orders.shop_id', $shop->id)->with('items:id,order_id,name,qty', 'courierAccount.courier:id,name', 'paymentMethod:id,name')
+            ->oldest('id')->lazyById(500);
+
+        $rows = (function () use ($orders) {
+            foreach ($orders as $o) {
+                yield [
+                    $o->number, $o->created_at->format('Y-m-d H:i'), $o->channel->label(), $o->seller->label(),
+                    $o->status->label(), $o->payment_status->label(), $o->paymentMethod?->name,
+                    $o->customer_name, $o->customer_phone ? Phone::local($o->customer_phone) : null, $o->delivery_city,
+                    $o->items->map(fn ($i) => "{$i->name} x{$i->qty}")->implode('; '),
+                    $o->subtotal, $o->discount, $o->delivery_fee, $o->total,
+                    $o->courierAccount?->courier->name, $o->tracking_number,
+                ];
+            }
+        })();
+
+        return CsvExport::download("orders-{$shop->code}-".now()->format('Ymd-His').'.csv', [
+            'Order', 'Date', 'Channel', 'Seller', 'Status', 'Payment', 'Payment method', 'Customer', 'Phone', 'City',
+            'Items', 'Subtotal', 'Discount', 'Delivery fee', 'Total', 'Courier', 'Tracking',
+        ], $rows);
+    }
+
+    /** @return Builder<Order> */
+    private function filtered(Request $request): Builder
+    {
         $f = $request->validate([
             'status' => ['nullable', Rule::enum(OrderStatus::class)],
             'payment_status' => ['nullable', 'in:unpaid,paid,refunded'],
@@ -43,12 +85,9 @@ final class OrderController extends Controller
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date'],
             'needs_action' => ['nullable', 'boolean'],
-            'per_page' => ['nullable', 'integer', 'min:5', 'max:100'],
         ]);
 
-        $orders = Order::query()
-            ->with('customer:id,is_risky,returns_count')
-            ->withCount('items')
+        return Order::query()
             ->when($f['status'] ?? null, fn ($q, $v) => $q->where('status', $v))
             ->when($f['payment_status'] ?? null, fn ($q, $v) => $q->where('payment_status', $v))
             ->when($f['seller'] ?? null, fn ($q, $v) => $q->where('seller', $v))
@@ -64,11 +103,7 @@ final class OrderController extends Controller
                     ->orWhere('customer_name', 'like', "%{$term}%")
                     ->orWhere('tracking_number', 'like', "%{$term}%")
                     ->when($phone, fn ($p) => $p->orWhere('customer_phone', $phone)));
-            })
-            ->latest('id')
-            ->paginate($f['per_page'] ?? 25);
-
-        return OrderListResource::collection($orders);
+            });
     }
 
     public function store(Request $request, Shop $shop, PlaceOrder $action): JsonResponse

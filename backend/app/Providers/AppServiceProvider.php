@@ -12,6 +12,7 @@ use App\Infrastructure\Couriers\ManualCourierGateway;
 use App\Infrastructure\Sms\LogSmsGateway;
 use App\Infrastructure\Sms\TextLkSmsGateway;
 use App\Models\User;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -43,6 +44,10 @@ class AppServiceProvider extends ServiceProvider
     {
         // Catch typos in mass assignment early; lazy loading stays allowed (lists eager-load what they need).
         Model::preventSilentlyDiscardingAttributes(! $this->app->isProduction());
+
+        // Reset links open the SPA, which posts to /api/v1/auth/reset-password.
+        ResetPassword::createUrlUsing(fn (User $user, string $token) => rtrim((string) config('app.url'), '/')
+            .'/reset-password?token='.$token.'&email='.urlencode($user->email));
 
         // Gloma admin passes every permission check (spatie permissions are still seeded for clarity / staff later).
         Gate::before(fn (User $user) => $user->hasRole(Perm::ROLE_ADMIN) ? true : null);

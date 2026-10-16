@@ -17,12 +17,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\LedgerEntryResource;
 use App\Http\Resources\MessageLogResource;
 use App\Support\BusinessRuleException;
+use App\Support\CsvExport;
 use App\Support\Money;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Dashboard, reports, money ledger and SMS usage for one shop.
@@ -43,6 +46,7 @@ final class FinanceController extends Controller
             'cod_outstanding' => $figures->codOutstanding($shop->id),
             'balances' => $figures->balances($shop->id),
             'returns' => $figures->returnsCount($shop->id, $from, $to),
+            'trend' => $figures->trend($shop->id, $from, $to),
         ]]);
     }
 
@@ -56,19 +60,8 @@ final class FinanceController extends Controller
     /** Ledger statement with totals per side and per type. Filters: party, type, from, to. */
     public function ledger(Request $request, Shop $shop): JsonResponse
     {
-        $f = $request->validate([
-            'party' => ['nullable', Rule::enum(Party::class)],
-            'type' => ['nullable', Rule::enum(LedgerType::class)],
-            'from' => ['nullable', 'date'],
-            'to' => ['nullable', 'date'],
-            'per_page' => ['nullable', 'integer', 'min:5', 'max:200'],
-        ]);
-
-        $query = LedgerEntry::query()
-            ->when($f['party'] ?? null, fn ($q, $v) => $q->where('party', $v))
-            ->when($f['type'] ?? null, fn ($q, $v) => $q->where('type', $v))
-            ->when($f['from'] ?? null, fn ($q, $v) => $q->whereDate('occurred_on', '>=', $v))
-            ->when($f['to'] ?? null, fn ($q, $v) => $q->whereDate('occurred_on', '<=', $v));
+        $f = $request->validate(['per_page' => ['nullable', 'integer', 'min:5', 'max:200']]);
+        $query = $this->ledgerQuery($request);
 
         $byType = (clone $query)->groupBy('party', 'type')->select('party', 'type', DB::raw('sum(amount) as total'))->get()
             ->map(fn ($r) => ['party' => $r->party->toArray(), 'type' => $r->type->toArray(), 'total' => Money::of((string) $r->getAttribute('total'))]);
@@ -79,6 +72,65 @@ final class FinanceController extends Controller
             'by_type' => $byType->values(),
             'balances' => app(ShopFigures::class)->balances($shop->id),
         ]])->response();
+    }
+
+    /** The ledger (same filters) as CSV, oldest first, with a running balance per side. */
+    public function exportLedger(Request $request, Shop $shop): StreamedResponse
+    {
+        // Explicit shop filter: rows stream after the tenant middleware has finished (see CsvExport).
+        $entries = $this->ledgerQuery($request)->where('ledger_entries.shop_id', $shop->id)->with('order:id,number')->orderBy('occurred_on')->orderBy('id')->lazy(500);
+
+        $rows = (function () use ($entries) {
+            $running = ['gloma' => '0.00', 'shop' => '0.00'];
+            foreach ($entries as $e) {
+                $running[$e->party->value] = Money::add($running[$e->party->value], $e->amount);
+                yield [
+                    $e->occurred_on->toDateString(), $e->party->label(), $e->type->label(), $e->description,
+                    $e->order?->number, $e->amount, $running[$e->party->value],
+                ];
+            }
+        })();
+
+        return CsvExport::download("ledger-{$shop->code}-".now()->format('Ymd-His').'.csv',
+            ['Date', 'Side', 'Type', 'Description', 'Order', 'Amount', 'Running balance (side)'], $rows);
+    }
+
+    /** Sales report products table as CSV (same period rules as the report). */
+    public function exportSalesReport(Request $request, Shop $shop, SalesReport $report): StreamedResponse
+    {
+        [$from, $to] = $this->period($request);
+        $data = $report->build($shop->id, $from, $to);
+
+        $rows = array_map(fn (array $p) => [
+            $p['sku'], $p['name'], $p['bought_qty'], $p['bought_cost'],
+            $p['sold']['gloma']['qty'], $p['sold']['gloma']['revenue'], $p['sold']['shop']['qty'], $p['sold']['shop']['revenue'],
+            $p['revenue'], $p['cogs'], $p['gross_profit'], $p['returned_qty'], $p['damaged_qty'], $p['in_stock'],
+        ], $data['products']);
+        $t = $data['totals'];
+        $rows[] = ['TOTAL', "Net revenue {$t['net_revenue']} · delivery fees {$t['delivery_fees_collected']} · courier {$t['courier_charges']} · returns {$t['return_charges']}",
+            null, null, null, null, null, null, $t['items_revenue'], $t['cost_of_goods_sold'], $t['gross_profit'], null, null, null];
+
+        return CsvExport::download("sales-{$shop->code}-{$from->toDateString()}-to-{$to->toDateString()}.csv", [
+            'SKU', 'Product', 'Bought qty', 'Bought cost', 'Sold by Gloma (qty)', 'Gloma revenue', 'Sold by shop (qty)', 'Shop revenue',
+            'Revenue', 'Cost of goods sold', 'Gross profit', 'Returned (good)', 'Damaged', 'In stock',
+        ], $rows);
+    }
+
+    /** @return Builder<LedgerEntry> */
+    private function ledgerQuery(Request $request): Builder
+    {
+        $f = $request->validate([
+            'party' => ['nullable', Rule::enum(Party::class)],
+            'type' => ['nullable', Rule::enum(LedgerType::class)],
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date'],
+        ]);
+
+        return LedgerEntry::query()
+            ->when($f['party'] ?? null, fn ($q, $v) => $q->where('party', $v))
+            ->when($f['type'] ?? null, fn ($q, $v) => $q->where('type', $v))
+            ->when($f['from'] ?? null, fn ($q, $v) => $q->whereDate('occurred_on', '>=', $v))
+            ->when($f['to'] ?? null, fn ($q, $v) => $q->whereDate('occurred_on', '<=', $v));
     }
 
     /** Admin-only manual entries: money from shop, Gloma fee, payout, adjustment. */

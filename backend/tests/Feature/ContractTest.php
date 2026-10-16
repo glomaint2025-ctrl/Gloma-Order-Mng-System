@@ -42,7 +42,7 @@ it('keeps list, product and meta shapes', function () {
         'links', 'meta' => ['current_page', 'last_page', 'per_page', 'total'],
     ]);
     $this->actingAs($this->owner)->getJson("{$base}/products")->assertJsonStructure([
-        'data' => [['id', 'sku', 'name', 'description', 'price', 'avg_cost', 'is_active', 'stock' => ['total', 'by_location' => [['location' => ['value', 'label'], 'qty']]]]],
+        'data' => [['id', 'sku', 'name', 'description', 'image_url', 'price', 'avg_cost', 'is_active', 'stock' => ['total', 'by_location' => [['location' => ['value', 'label'], 'qty']]]]],
     ]);
     $this->actingAs($this->owner)->getJson('/api/v1/meta')->assertJsonStructure(['data' => [
         'order_statuses', 'payment_statuses', 'order_channels', 'parties', 'stock_locations', 'stock_modes', 'shop_statuses',

@@ -24,6 +24,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 /**
@@ -79,6 +80,34 @@ final class CatalogController extends Controller
         ]);
         $product->fill($data)->save();
         $audit->logModelChange('product.updated', $product);
+
+        return new ProductResource($product->load('stockLevels'));
+    }
+
+    /** multipart `image` (jpg/png/webp, max 2 MB). Replaces any previous image. */
+    public function uploadImage(Request $request, Shop $shop, Product $product, AuditLogger $audit): ProductResource
+    {
+        $request->validate(['image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:max_width=4000,max_height=4000']]);
+
+        $old = $product->image_path;
+        $product->image_path = $request->file('image')?->store("products/{$shop->id}", 'public') ?: null;
+        $product->save();
+        if ($old) {
+            Storage::disk('public')->delete($old);
+        }
+        $audit->log('product.image_updated', $product);
+
+        return new ProductResource($product->load('stockLevels'));
+    }
+
+    public function deleteImage(Shop $shop, Product $product, AuditLogger $audit): ProductResource
+    {
+        if ($product->image_path) {
+            Storage::disk('public')->delete($product->image_path);
+            $product->image_path = null;
+            $product->save();
+            $audit->log('product.image_removed', $product);
+        }
 
         return new ProductResource($product->load('stockLevels'));
     }

@@ -32,6 +32,9 @@ final class Perm
 
     public const LEDGER_MANAGE = 'ledger.manage';
 
+    /** PDPA data-subject requests (export / erase one customer). */
+    public const PRIVACY_MANAGE = 'privacy.manage';
+
     // Both roles
     public const ORDERS_PLACE = 'orders.place';
 
@@ -51,6 +54,7 @@ final class Perm
         return [
             self::SHOPS_MANAGE, self::USERS_MANAGE, self::COURIERS_MANAGE, self::TEMPLATES_GLOBAL,
             self::AUDIT_VIEW, self::ADMIN_REPORTS, self::PRODUCTS_MANAGE, self::STOCK_MANAGE, self::LEDGER_MANAGE,
+            self::PRIVACY_MANAGE,
         ];
     }
 

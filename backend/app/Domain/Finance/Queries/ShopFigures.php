@@ -85,6 +85,37 @@ final class ShopFigures
         return $out;
     }
 
+    /**
+     * Sales over time for a small chart: one bucket per day (per month when the range is over 92 days).
+     * Every bucket is present, with zeros for quiet days, so the UI just draws bars.
+     *
+     * @return array{bucket: string, points: list<array{date: string, orders: int, gloma: string, shop: string, total: string}>}
+     */
+    public function trend(int $shopId, Carbon $from, Carbon $to): array
+    {
+        $monthly = $from->diffInDays($to) > 92;
+        $key = fn (Carbon $d) => $monthly ? $d->format('Y-m') : $d->toDateString();
+
+        $points = [];
+        for ($d = $from->copy()->startOfDay(); $d->lte($to); $monthly ? $d->addMonthNoOverflow()->startOfMonth() : $d->addDay()) {
+            $points[$key($d)] = ['date' => $key($d), 'orders' => 0, 'gloma' => '0.00', 'shop' => '0.00', 'total' => '0.00'];
+        }
+
+        $rows = $this->soldOrders($shopId, $from, $to)->select(['id', 'seller', 'subtotal', 'discount', 'delivered_at'])->lazyById(1000);
+        foreach ($rows as $order) {
+            $k = $key($order->delivered_at ?? $from);
+            if (! isset($points[$k])) {
+                continue;
+            }
+            $net = Money::sub($order->subtotal, $order->discount);
+            $points[$k]['orders']++;
+            $points[$k][$order->seller->value] = Money::add($points[$k][$order->seller->value], $net);
+            $points[$k]['total'] = Money::add($points[$k]['total'], $net);
+        }
+
+        return ['bucket' => $monthly ? 'month' : 'day', 'points' => array_values($points)];
+    }
+
     /** @return array<string, int> status => count of open orders */
     public function openOrders(int $shopId): array
     {
