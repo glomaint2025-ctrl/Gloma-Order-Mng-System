@@ -94,10 +94,9 @@ Every decision, with date and reason. Newest at the bottom. Source of the first 
 | D56 | 2026-10-16 | Added before go-live: forgot/reset password by email, CSV exports (orders, ledger, sales report), a daily/monthly sales trend, product photos, and PDPA export/erase for one customer (admin, `privacy.manage`). Erase keeps amounts and the ledger. | Standard needs for a live back office; PDPA data-subject rights from 2027-01-01. |
 | D57 | 2026-10-16 | **Streamed responses must not rely on the tenant global scope.** CSV rows are produced after the `tenant` middleware ends, so exports filter by `shop_id` explicitly and `CsvExport` re-applies the shop during streaming. | A test caught cross-shop rows in an export; each protection is now tested on its own. |
 | D58 | 2026-10-28 | **SMS goes through Dialog eSMS** (`SMS_DRIVER=dialog`, message-via-URL API), using the same account and mask as GlomaLoans for now. Text.lk stays available as a driver but is no longer the default plan (replaces the Text.lk assumption in A02). | The developer's direction: Gloma already uses Dialog eSMS. |
+| D59 | 2026-10-28 | **Production is `https://shop.glomacapital.com`** on the StackCP (20i) Blaze plan, folder `~/apps/shop`, PHP 8.5, MariaDB 10.11. Code lives in `glomaint2025-ctrl/Gloma-Order-Mng-System`. A push to `main` deploys. There is no UAT site yet. | The developer's direction. Same host as GlomaCapital. |
+| D60 | 2026-10-28 | **Answers to Q7 and Q8 (the boss).** Q7: yes, one payment can cover several orders at once, possibly as a credit or balance system (still to be designed, not built yet). Q8: no part payments or instalments, and no partial returns, for now. A return still covers the whole parcel (A05, A06 stay). | Business rule answer, given through the developer. |
 
 ## Open business decisions (need the boss)
 
-| # | Question | Today | Why it waits |
-|---|---|---|---|
-| Q7 | **COD remittance batch:** record one courier payout covering many orders, minus the courier's fees? | Payment is recorded per order (A06). Courier charges are recorded at dispatch. | It changes how COD money is matched and reported. |
-| Q8 | **Part payments / partial returns** (customer keeps some items)? | Full payment only; a return covers the whole parcel (A05, A06). | It changes the money and stock rules. |
+None open. Q7 and Q8 were answered in D60.
