@@ -80,7 +80,6 @@ jobs:
   frontend:
     name: Frontend quality
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('frontend/package.json') != '' }}
     defaults:
       run:
         working-directory: frontend
@@ -105,7 +104,7 @@ jobs:
     needs: [backend, frontend]
     if: >-
       always() && github.event_name == 'push' && github.ref_name == 'main'
-      && needs.backend.result == 'success' && (needs.frontend.result == 'success' || needs.frontend.result == 'skipped')
+      && needs.backend.result == 'success' && needs.frontend.result == 'success'
     runs-on: ubuntu-latest
     environment: production
     env:
@@ -124,15 +123,12 @@ jobs:
           coverage: none
 
       - uses: pnpm/action-setup@v4
-        if: ${{ hashFiles('frontend/package.json') != '' }}
         with:
           package_json_file: frontend/package.json
       - uses: actions/setup-node@v4
-        if: ${{ hashFiles('frontend/package.json') != '' }}
         with:
           node-version: '22'
-      - name: Build frontend into backend/public/app (when it exists)
-        if: ${{ hashFiles('frontend/package.json') != '' }}
+      - name: Build frontend into backend/public/app
         run: cd frontend && pnpm install --frozen-lockfile && pnpm run build
 
       - name: Install production PHP dependencies
