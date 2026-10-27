@@ -1,6 +1,7 @@
 name: CI / CD
 
-# Quality bar on every push and PR. Deploys: push to `uat` → UAT folder, push to `main` → production folder (D52).
+# Quality bar on every push and PR. Deploy: push to `main` → production, shop.glomacapital.com (D52, D59).
+# There is no UAT site yet. Server defaults live below, so the only required secret is SSH_PRIVATE_KEY (like GlomaLoans).
 on:
   push:
     branches: ['**']
@@ -100,13 +101,20 @@ jobs:
       - run: pnpm run build
 
   deploy:
-    name: Deploy (${{ github.ref_name == 'main' && 'production' || 'uat' }})
+    name: Deploy (production)
     needs: [backend, frontend]
     if: >-
-      always() && github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'uat')
+      always() && github.event_name == 'push' && github.ref_name == 'main'
       && needs.backend.result == 'success' && (needs.frontend.result == 'success' || needs.frontend.result == 'skipped')
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'main' && 'production' || 'uat' }}
+    environment: production
+    env:
+      SSH_HOST: ${{ secrets.SSH_HOST || 'ssh.us.stackcp.com' }}
+      SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+      SSH_USER: ${{ secrets.SSH_USER || 'glomacapital.com' }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '/home/sites/42a/8/80f5d30b59/apps/shop' }}
+      PHP_BIN: ${{ secrets.PHP_BIN || '/usr/bin/php85' }}
+      APP_URL: ${{ vars.APP_URL || 'https://shop.glomacapital.com' }}
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
@@ -139,14 +147,9 @@ jobs:
 
       - name: Upload and activate on the server
         env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_PORT: ${{ secrets.SSH_PORT }}
-          SSH_USER: ${{ secrets.SSH_USER }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-          PHP_BIN: ${{ secrets.PHP_BIN }}
         run: |
-          mkdir -p ~/.ssh && echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
+          mkdir -p ~/.ssh && printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
           ssh-keyscan -p "${SSH_PORT:-22}" "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
           SSH="ssh -i ~/.ssh/id_deploy -p ${SSH_PORT:-22} $SSH_USER@$SSH_HOST"
           RELEASE="$(date -u +%Y%m%d%H%M%S)-${GITHUB_SHA::7}"
@@ -155,13 +158,6 @@ jobs:
           $SSH "bash '$DEPLOY_PATH/releases/$RELEASE/remote-deploy.sh' '$DEPLOY_PATH' '$RELEASE' '${PHP_BIN:-php}'"
 
       - name: Health check (auto-rollback on failure)
-        env:
-          APP_URL: ${{ vars.APP_URL }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_PORT: ${{ secrets.SSH_PORT }}
-          SSH_USER: ${{ secrets.SSH_USER }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-          PHP_BIN: ${{ secrets.PHP_BIN }}
         run: |
           for i in 1 2 3 4 5; do
             if curl -fsS "$APP_URL/api/v1/health" | grep -q '"status":"ok"'; then echo "Healthy"; exit 0; fi

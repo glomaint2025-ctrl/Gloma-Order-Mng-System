@@ -27,7 +27,7 @@
 | PORTAL_PRIVACY_URL | no | — | ✓ | ✓ | PDPA privacy notice |
 | CUSTOMER_RETENTION_YEARS | no | 5 | 5 | lawyer-confirmed | ASSUMED 5 |
 
-**GitHub secrets per environment** (`uat`, `production`): `SSH_HOST`, `SSH_PORT`, `SSH_USER`, `SSH_PRIVATE_KEY`, `DEPLOY_PATH` (e.g. `/home/<user>/apps/uat`), `PHP_BIN` (e.g. `/usr/local/bin/ea-php82`), plus the variable `APP_URL`. Turn on "required reviewers" for `production`.
+**GitHub (production, D59):** the only required secret is `SSH_PRIVATE_KEY` (the `glomacapital_deploy` private key). The workflow has defaults for everything else: `SSH_HOST=ssh.us.stackcp.com`, `SSH_USER=glomacapital.com`, `SSH_PORT=22`, `DEPLOY_PATH=/home/sites/42a/8/80f5d30b59/apps/shop`, `PHP_BIN=/usr/bin/php85`, `APP_URL=https://shop.glomacapital.com`. A secret with the same name overrides a default. On StackCP, cron goes in Scheduled Tasks (`crontab` is blocked) and databases are created in the web UI.
 
 ## Server first-time setup (once per environment)
 1. cPanel → **PHP version** for the domain or subdomain: 8.2+ with `bcmath, intl, gd, zip, pdo_mysql, mbstring, fileinfo`.

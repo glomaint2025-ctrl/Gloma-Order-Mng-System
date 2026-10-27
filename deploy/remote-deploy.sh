@@ -27,6 +27,10 @@ if [ ! -f "$DEPLOY_PATH/shared/.env" ]; then
 fi
 ln -sfn "$DEPLOY_PATH/shared/.env" "$DIR/.env"
 rm -rf "$DIR/storage" && ln -sfn "$DEPLOY_PATH/shared/storage" "$DIR/storage"
+# The health endpoint reports APP_VERSION, so keep it in step with the deployed commit.
+if [ -f "$DIR/REVISION" ]; then
+  sed -i "s/^APP_VERSION=.*/APP_VERSION=$(cat "$DIR/REVISION")/" "$DEPLOY_PATH/shared/.env"
+fi
 
 # App tasks (before switching traffic). Migrations must be backward compatible (expand → contract).
 $PHP artisan migrate --force
