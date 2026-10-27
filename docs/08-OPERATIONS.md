@@ -4,8 +4,8 @@
 | Env | Where | Branch | DB | SMS / mail | Data |
 |---|---|---|---|---|---|
 | Local | Dev PC (XAMPP PHP 8.2 + SQLite, or `docker compose up`) | any | SQLite / MySQL 8 (Docker) | `log` / `log` or Mailpit | `DemoSeeder` |
-| UAT | ServerByte Blazer, `uat.<domain>` → `~/apps/uat/current/public` | `uat` (auto-deploy) | MySQL `<user>_uat` | Text.lk (test sender) / provider | `DemoSeeder` allowed |
-| Production | ServerByte Blazer, `<domain>` → `~/apps/prod/current/public` | `main` (auto-deploy) | MySQL `<user>_prod` | Text.lk / provider | real; **never** DemoSeeder |
+| UAT | ServerByte Blazer, `uat.<domain>` → `~/apps/uat/current/public` | `uat` (auto-deploy) | MySQL `<user>_uat` | Dialog eSMS / provider | `DemoSeeder` allowed |
+| Production | ServerByte Blazer, `<domain>` → `~/apps/prod/current/public` | `main` (auto-deploy) | MySQL `<user>_prod` | Dialog eSMS / provider | real; **never** DemoSeeder |
 
 ## Settings (`shared/.env` on the server)
 | Name | Secret? | Local | UAT | Prod | Notes |
@@ -20,9 +20,9 @@
 | SESSION_DOMAIN | no | null | null | null | same domain |
 | QUEUE_CONNECTION / CACHE_STORE | no | database | database | database | redis on VPS |
 | MAIL_* | password yes | log | ✓ | ✓ | transactional provider + SPF/DKIM. Also needed for **forgot password** emails |
-| SMS_DRIVER | no | log | textlk | textlk | |
-| TEXTLK_API_TOKEN | **yes** | — | ✓ | ✓ | |
-| TEXTLK_SENDER_ID | no | — | ✓ | ✓ | approval takes up to 3 business days |
+| SMS_DRIVER | no | log | dialog | dialog | `textlk` is still supported |
+| DIALOG_ESMS_API_KEY | **yes** | — | ✓ | ✓ | same Dialog eSMS account as GlomaLoans (D58) |
+| DIALOG_ESMS_SENDER_ID | no | — | ✓ | ✓ | registered mask, case-sensitive |
 | SMS_COST_PER_SEGMENT | no | 0.64 | 0.64 | contract rate | used to bill shops |
 | PORTAL_PRIVACY_URL | no | — | ✓ | ✓ | PDPA privacy notice |
 | CUSTOMER_RETENTION_YEARS | no | 5 | 5 | lawyer-confirmed | ASSUMED 5 |
@@ -78,17 +78,17 @@
 
 ### Go-live (phase 1)
 - [ ] Lawyer approved the shop contract (CBSL) and the privacy notice (PDPA). `PORTAL_PRIVACY_URL` is set.
-- [ ] Text.lk sender ID approved. One real SMS received (`portal:test-notify`).
+- [ ] Dialog eSMS mask registered. One real SMS received (`portal:test-notify`).
 - [ ] Email provider domain verified (SPF, DKIM, DMARC). Email lands in the inbox, not spam.
 - [ ] Courier tracking patterns checked with real numbers (SPIKE-2), and fixed in Admin → Couriers if needed.
 - [ ] Cron running (`cron_last_run` is fresh). Queue empty.
-- [ ] Production `.env`: `APP_DEBUG=false`, `SESSION_SECURE_COOKIE=true`, `SMS_DRIVER=textlk`.
+- [ ] Production `.env`: `APP_DEBUG=false`, `SESSION_SECURE_COOKIE=true`, `SMS_DRIVER=dialog`.
 - [ ] Admin login created. Demo data **not** present.
 - [ ] Daily DB backup cron: `0 2 * * * mysqldump … | gzip > ~/backups/$(date +\%F).sql.gz && find ~/backups -mtime +14 -delete`.
 - [ ] UAT checklist (09-TESTING) signed off.
 
 ### Rotating secrets
-- **Text.lk token:** create a new token in Text.lk → update `shared/.env` → `php artisan config:cache` → send a test SMS → revoke the old token.
+- **Dialog eSMS key:** create a new key in the Dialog eSMS portal → update `shared/.env` → `php artisan config:cache` → send a test SMS → revoke the old key.
 - **Mail password:** same steps.
 - **APP_KEY:** only if it has leaked. This logs everyone out and breaks encrypted values. Set `APP_PREVIOUS_KEYS=<old>`, then the new `APP_KEY`, then `config:cache`.
 - **Deploy SSH key:** add the new key in cPanel → update the GitHub secret → remove the old key.
@@ -101,4 +101,4 @@
 4. Fix the cause, add a test, and record it in the release log.
 
 ### Queue stuck / messages not sent
-Check `/api/v1/health` (`queue.pending`, `failed`, `cron_last_run`). If cron is stale, fix the cron line. If failed > 0, run `php artisan queue:failed` to read the errors (usually Text.lk balance or credentials), fix them, then `php artisan queue:retry all`.
+Check `/api/v1/health` (`queue.pending`, `failed`, `cron_last_run`). If cron is stale, fix the cron line. If failed > 0, run `php artisan queue:failed` to read the errors (usually SMS balance or credentials), fix them, then `php artisan queue:retry all`.

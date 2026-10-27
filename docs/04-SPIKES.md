@@ -19,5 +19,5 @@ Run these before relying on the risky parts. Results are logged at the bottom of
   1. `ssh` in, then `php -v` and `mysql --version`.
   2. Add the cron line and check that `storage/logs/cron.log` updates every minute.
   3. Symlink `public_html/uat → ~/apps/uat/current/public` and load `/api/v1/health`.
-  4. Send one SMS (Text.lk) and one email (provider) with `php artisan portal:test-notify`.
+  4. Send one SMS (Dialog eSMS) and one email (provider) with `php artisan portal:test-notify`.
 - **Status:** **NOT RUN** (needs server access). If there's no SSH, the fallback is an FTP deploy action (see 08-OPERATIONS).

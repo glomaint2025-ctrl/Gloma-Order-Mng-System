@@ -9,6 +9,7 @@ use App\Domain\Notifications\Contracts\SmsGateway;
 use App\Domain\Shops\Tenancy\TenantContext;
 use App\Domain\Users\Perm;
 use App\Infrastructure\Couriers\ManualCourierGateway;
+use App\Infrastructure\Sms\DialogEsmsSmsGateway;
 use App\Infrastructure\Sms\LogSmsGateway;
 use App\Infrastructure\Sms\TextLkSmsGateway;
 use App\Models\User;
@@ -30,6 +31,11 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(SmsGateway::class, function () {
             return match (config('portal.sms.driver')) {
+                'dialog' => new DialogEsmsSmsGateway(
+                    (string) config('portal.sms.dialog.endpoint'),
+                    (string) config('portal.sms.dialog.api_key'),
+                    (string) config('portal.sms.dialog.sender_id'),
+                ),
                 'textlk' => new TextLkSmsGateway(
                     (string) config('portal.sms.textlk.base_url'),
                     (string) config('portal.sms.textlk.token'),
