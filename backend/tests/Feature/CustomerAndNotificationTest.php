@@ -95,6 +95,29 @@ describe('notifications', function () {
         expect($log->fresh()->status)->toBe('failed');
     });
 
+    it('sends dispatch SMS through Dialog eSMS with the right query', function () {
+        config(['portal.sms.driver' => 'dialog', 'portal.sms.dialog.api_key' => 'test-key', 'portal.sms.dialog.sender_id' => 'Gloma']);
+        Http::fake(['e-sms.dialog.lk/*' => Http::response('1|98765')]);
+
+        $id = placeOrder($this->owner, $this->shop, $this->product)->json('data.id');
+        advance($this->owner, $this->shop, $id, 'dispatch');
+
+        Http::assertSent(fn ($r) => str_starts_with($r->url(), 'https://e-sms.dialog.lk/api/v1/message-via-url/create/url-campaign?')
+            && $r['esmsqk'] === 'test-key' && $r['list'] === '94771234567' && $r['source_address'] === 'Gloma'
+            && str_contains($r['message'], 'Alpha Store'));
+        expect(MessageLog::withoutGlobalScopes()->where('channel', 'sms')->sole()->provider_ref)->toBe('98765');
+    });
+
+    it('records the Dialog eSMS error code as a readable reason', function () {
+        config(['portal.sms.driver' => 'dialog', 'portal.sms.dialog.api_key' => 'k', 'portal.sms.dialog.sender_id' => 'G']);
+        Http::fake(['e-sms.dialog.lk/*' => Http::response('2008')]);
+
+        $id = placeOrder($this->owner, $this->shop, $this->product)->json('data.id');
+        advance($this->owner, $this->shop, $id, 'dispatch')->assertJsonPath('data.status.value', 'dispatched');
+
+        expect(MessageLog::withoutGlobalScopes()->where('channel', 'sms')->sole()->error)->toContain('insufficient account balance');
+    });
+
     it('sends the e-bill email with the invoice PDF attached', function () {
         Mail::fake();
         placeOrder($this->owner, $this->shop, $this->product)->assertCreated();

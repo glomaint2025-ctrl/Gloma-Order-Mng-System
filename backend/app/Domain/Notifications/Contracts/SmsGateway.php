@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Notifications\Contracts;
 
 /**
- * SMS provider boundary. Drivers: `log` (dev/test) and `textlk`.
+ * SMS provider boundary. Drivers: `log` (dev/test), `dialog` (Dialog eSMS) and `textlk`.
  */
 interface SmsGateway
 {

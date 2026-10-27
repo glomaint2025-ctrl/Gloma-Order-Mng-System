@@ -93,6 +93,7 @@ Every decision, with date and reason. Newest at the bottom. Source of the first 
 | D55 | 2026-10-16 | The frontend was built with Antigravity, then reviewed end to end against the real API. Six bugs were fixed (customer lookup/detail unwrap, live total, UTC dates, placeholders, guards), and contract tests now use the real backend response shapes. | Mocked tests had drifted from the real API. |
 | D56 | 2026-10-16 | Added before go-live: forgot/reset password by email, CSV exports (orders, ledger, sales report), a daily/monthly sales trend, product photos, and PDPA export/erase for one customer (admin, `privacy.manage`). Erase keeps amounts and the ledger. | Standard needs for a live back office; PDPA data-subject rights from 2027-01-01. |
 | D57 | 2026-10-16 | **Streamed responses must not rely on the tenant global scope.** CSV rows are produced after the `tenant` middleware ends, so exports filter by `shop_id` explicitly and `CsvExport` re-applies the shop during streaming. | A test caught cross-shop rows in an export; each protection is now tested on its own. |
+| D58 | 2026-10-28 | **SMS goes through Dialog eSMS** (`SMS_DRIVER=dialog`, message-via-URL API), using the same account and mask as GlomaLoans for now. Text.lk stays available as a driver but is no longer the default plan (replaces the Text.lk assumption in A02). | The developer's direction: Gloma already uses Dialog eSMS. |
 
 ## Open business decisions (need the boss)
 
